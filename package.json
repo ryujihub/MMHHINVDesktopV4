@@ -50,6 +50,7 @@
     "@mui/x-date-pickers": "^6.18.2",
     "date-fns": "^2.30.0",
     "firebase": "^10.7.1",
+    "git-filter-repo": "^0.0.30",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.1",
