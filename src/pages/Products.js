@@ -48,6 +48,7 @@ const Products = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(''); // New state for category filter
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [formData, setFormData] = useState({
     name: '',
@@ -55,7 +56,6 @@ const Products = () => {
     category: '',
     price: '',
     sellingPrice: '',
-    cost: '',
     currentStock: '0',
     minimumStock: '0',
     physicalCount: '0', // Add physicalCount to initial state
@@ -84,17 +84,30 @@ const Products = () => {
     };
   };
 
-  // Filtered products based on search
+  // Filtered products based on search and category
   const filteredProducts = useMemo(() => {
-    if (!searchQuery) return products;
-    const query = searchQuery.toLowerCase();
-    return products.filter(product =>
-      (product.name && product.name.toLowerCase().includes(query)) ||
-      (product.sku && product.sku.toLowerCase().includes(query)) ||
-      (product.productCode && product.productCode.toLowerCase().includes(query)) ||
-      (product.category && product.category.toLowerCase().includes(query))
-    );
-  }, [products, searchQuery]);
+    let currentProducts = products;
+
+    // Apply search query filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      currentProducts = currentProducts.filter(product =>
+        (product.name && product.name.toLowerCase().includes(query)) ||
+        (product.sku && product.sku.toLowerCase().includes(query)) ||
+        (product.productCode && product.productCode.toLowerCase().includes(query)) ||
+        (product.category && product.category.toLowerCase().includes(query))
+      );
+    }
+
+    // Apply category filter
+    if (selectedCategory) {
+      currentProducts = currentProducts.filter(product =>
+        product.category === selectedCategory
+      );
+    }
+
+    return currentProducts;
+  }, [products, searchQuery, selectedCategory]);
 
   // Define handler functions first
   const handleEdit = (product) => {
@@ -136,15 +149,6 @@ const Products = () => {
     { 
       field: 'sellingPrice', 
       headerName: 'Selling Price', 
-      width: 100,
-      valueFormatter: (params) => {
-        if (params.value == null || params.value === undefined) return '₱0.00';
-        return `₱${Number(params.value).toFixed(2)}`;
-      }
-    },
-    { 
-      field: 'cost', 
-      headerName: 'Cost', 
       width: 100,
       valueFormatter: (params) => {
         if (params.value == null || params.value === undefined) return '₱0.00';
@@ -287,7 +291,6 @@ const Products = () => {
         category: '',
         price: '',
         sellingPrice: '',
-        cost: '',
         currentStock: '',
         minimumStock: '',
         reorderPoint: '',
@@ -349,7 +352,6 @@ const Products = () => {
       productCode: finalProductCode, // Add the Firebase field
       price: formData.price ? Number(formData.price) : 0,
       sellingPrice: formData.sellingPrice ? Number(formData.sellingPrice) : 0,
-      cost: formData.cost ? Number(formData.cost) : 0,
       currentStock: formData.currentStock ? Number(formData.currentStock) : 0,
       physicalCount: formData.physicalCount ? Number(formData.physicalCount) : 0, // Include physicalCount
       reorderPoint: formData.reorderPoint ? Number(formData.reorderPoint) : 0,
@@ -384,39 +386,19 @@ const Products = () => {
   };
 
   const handleImport = () => {
-    // Implement CSV/Excel import functionality
-    if (window.electronAPI) {
-      window.electronAPI.selectFile({
-        title: 'Select CSV/Excel file to import',
-        filters: [
-          { name: 'CSV Files', extensions: ['csv'] },
-          { name: 'Excel Files', extensions: ['xlsx', 'xls'] }
-        ]
-      }).then(result => {
-        if (!result.canceled && result.filePaths.length > 0) {
-          // Handle file import
-          console.log('Import file:', result.filePaths[0]);
-        }
-      });
-    }
+    setSnackbar({
+      open: true,
+      message: 'Import functionality is currently disabled.',
+      severity: 'info'
+    });
   };
 
   const handleExport = () => {
-    // Implement export functionality
-    if (window.electronAPI) {
-      window.electronAPI.saveFile({
-        title: 'Export Products',
-        filters: [
-          { name: 'CSV Files', extensions: ['csv'] },
-          { name: 'Excel Files', extensions: ['xlsx'] }
-        ]
-      }).then(result => {
-        if (!result.canceled) {
-          // Handle file export
-          console.log('Export file:', result.filePath);
-        }
-      });
-    }
+    setSnackbar({
+      open: true,
+      message: 'Export functionality is currently disabled.',
+      severity: 'info'
+    });
   };
 
   return (
@@ -466,24 +448,23 @@ const Products = () => {
               />
             </Grid>
             <Grid item xs={12} md={6}>
-              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<UploadIcon />}
-                  onClick={handleImport}
-                  sx={{ borderRadius: 1 }}
+              <FormControl fullWidth variant="outlined" sx={{ borderRadius: 1 }}>
+                <InputLabel>Filter by Category</InputLabel>
+                <Select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  label="Filter by Category"
                 >
-                  Import
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<DownloadIcon />}
-                  onClick={handleExport}
-                  sx={{ borderRadius: 1 }}
-                >
-                  Export
-                </Button>
-              </Box>
+                  <MenuItem value="">
+                    <em>All Categories</em>
+                  </MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.name}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
           </Grid>
         </CardContent>
@@ -629,24 +610,6 @@ const Products = () => {
                 margin="normal"
                 inputProps={{ min: 0, step: 0.01 }}
                 helperText="Price to sell to customers"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Cost (₱)"
-                type="number"
-                value={formData.cost}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || isNaN(value)) {
-                    handleInputChange('cost', '');
-                  } else {
-                    handleInputChange('cost', parseFloat(value));
-                  }
-                }}
-                margin="normal"
-                inputProps={{ min: 0, step: 0.01 }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>

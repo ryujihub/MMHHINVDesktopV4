@@ -1,0 +1,306 @@
+MMH Hardware Inventory Management System - Complete Application Flowchart
+
+================================================================================
+1. ELECTRON APPLICATION STARTUP FLOW
+================================================================================
+
+1.1 **Application Launch**
+    * User double-clicks MMH Hardware Inventory.exe or runs from command line
+    * Electron main process starts (public/electron.js)
+
+1.2 **Single Instance Check**
+    * Check if another instance is already running
+        * YES: Focus existing window and exit
+        * NO: Continue startup
+
+1.3 **Window Creation**
+    * Create BrowserWindow with dimensions 1400x900
+    * Set web security, node integration, preload script
+    * Set icon and window properties
+
+1.4 **Load Application Content**
+    * Development Mode:
+        * Load from http://localhost:3000 (React dev server)
+        * Open DevTools
+    * Production Mode:
+        * Load from build/index.html (packaged resources)
+        * Use fallback paths if needed
+
+1.5 **Window Display**
+    * Wait for 'ready-to-show' event
+    * Show window and focus
+    * Set up error handling and diagnostics
+
+1.6 **Menu Setup**
+    * Create application menu with:
+        * File: Import Products, Export Report, Exit
+        * Edit: Undo, Redo, Cut, Copy, Paste
+        * View: Reload, DevTools, Zoom controls
+        * Window: Minimize, Close
+
+================================================================================
+2. AUTHENTICATION FLOW
+================================================================================
+
+2.1 **Initial Load**
+    * React app loads (src/index.js)
+    * Material-UI theme applied
+    * AuthProvider and InventoryProvider initialized
+
+2.2 **Authentication Check**
+    * Check if user is authenticated via Firebase Auth
+        * NO: Show Login Page
+        * YES: Show Main Application Layout
+
+2.3 **Login Page (src/pages/Login.js)**
+    * User enters email and password
+    * Optional: Create new user account
+    * Authentication with Firebase
+        * SUCCESS: Redirect to Dashboard
+        * FAILURE: Show error message
+
+2.4 **User Creation (Optional)**
+    * Open Create User dialog
+    * Enter name, email, password, role (staff/admin)
+    * Create user in Firebase Auth with custom claims
+    * Set permissions based on role
+
+================================================================================
+3. MAIN APPLICATION LAYOUT
+================================================================================
+
+3.1 **Layout Structure**
+    * Sidebar (navigation menu)
+    * Header (with menu toggle, notifications)
+    * Main content area (routed pages)
+
+3.2 **Navigation Sidebar**
+    * Dashboard (overview and stats)
+    * Products (inventory management)
+    * Categories (product categorization)
+    * Sales Orders (order processing)
+    * Reports (analytics and reports)
+    * Profile (user settings)
+    * Settings (system configuration)
+
+================================================================================
+4. DASHBOARD PAGE FLOW (src/pages/Dashboard.js)
+================================================================================
+
+4.1 **Page Load**
+    * Fetch products, categories from InventoryContext
+    * Subscribe to recent activity from Firebase
+    * Calculate statistics:
+        * Total products count
+        * Total inventory value
+        * Low stock items
+        * Product distribution by category
+
+4.2 **Display Components**
+    * Statistics cards (Total Products, Total Value, Low Stock)
+    * Product distribution bar chart
+    * Quick actions (Add Product, View Reports)
+    * Low stock alerts list
+    * Recent activity feed
+
+4.3 **Admin Setup (if needed)**
+    * Check user role and permissions
+    * Show admin setup section if user needs admin rights
+    * Allow setting current user as admin
+
+4.4 **User Interactions**
+    * Click "Add Product" → Navigate to Products page with add dialog
+    * Click "View Reports" → Navigate to Reports page
+    * Click low stock items → Navigate to Products page
+
+================================================================================
+5. PRODUCTS PAGE FLOW (src/pages/Products.js)
+================================================================================
+
+5.1 **Page Load**
+    * Load products list from Firebase
+    * Load categories for filtering
+    * Initialize search and filter state
+
+5.2 **Product Management**
+    * View products in data grid
+    * Search and filter products
+    * Sort by various columns
+
+5.3 **Add/Edit Product**
+    * Open add/edit dialog
+    * Enter product details:
+        * Name, description, category
+        * Price, cost, stock levels
+        * Unit, reorder point
+    * Save to Firebase
+
+5.4 **Import/Export**
+    * Import from Excel/CSV (via Electron menu)
+    * Export product list
+    * Bulk operations
+
+================================================================================
+6. SALES ORDERS FLOW (src/pages/SalesOrders.js)
+================================================================================
+
+6.1 **Page Load**
+    * Load existing orders from Firebase
+    * Load products for order creation
+
+6.2 **Order Creation**
+    * Select customer information
+    * Add products to order
+    * Calculate totals and taxes
+    * Process payment
+
+6.3 **Order Management**
+    * View order history
+    * Update order status
+    * Print receipts
+    * Generate invoices
+
+================================================================================
+7. REPORTS PAGE FLOW (src/pages/Reports.js)
+================================================================================
+
+7.1 **Page Load**
+    * Load available report types
+    * Initialize date range filters
+
+7.2 **Report Generation**
+    * Select report type:
+        * Sales reports
+        * Inventory reports
+        * Profit/loss analysis
+    * Set date ranges and filters
+    * Query Firebase for data
+
+7.3 **Report Display**
+    * Charts and graphs (using Recharts)
+    * Data tables
+    * Export options (PDF, Excel)
+
+================================================================================
+8. SETTINGS PAGE FLOW (src/pages/Settings.js)
+================================================================================
+
+8.1 **Page Load**
+    * Load current settings from Firebase
+
+8.2 **Configuration Options**
+    * System settings
+    * User preferences
+    * Firebase configuration
+    * Backup/restore options
+
+================================================================================
+9. PROFILE PAGE FLOW (src/pages/Profile.js)
+================================================================================
+
+9.1 **Page Load**
+    * Load user profile data
+
+9.2 **Profile Management**
+    * Update personal information
+    * Change password
+    * View account details
+
+================================================================================
+10. CATEGORIES PAGE FLOW (src/pages/Categories.js)
+================================================================================
+
+10.1 **Page Load**
+    * Load categories from Firebase
+
+10.2 **Category Management**
+    * View category list
+    * Add new categories
+    * Edit existing categories
+    * Delete categories (if no products assigned)
+
+================================================================================
+11. LOGOUT FLOW
+================================================================================
+
+11.1 **Logout Action**
+    * User clicks logout (from header menu)
+    * Clear authentication session
+    * Sign out from Firebase Auth
+
+11.2 **Redirect**
+    * Navigate back to Login page
+    * Clear all cached data
+
+================================================================================
+12. ERROR HANDLING AND EDGE CASES
+================================================================================
+
+12.1 **Network Issues**
+    * Firebase connection failures
+    * Offline mode handling
+    * Data synchronization
+
+12.2 **Permission Errors**
+    * Access denied for non-admin users
+    * Role-based feature restrictions
+
+12.3 **Data Validation**
+    * Form validation errors
+    * Invalid data handling
+    * Duplicate entry prevention
+
+================================================================================
+13. ELECTRON INTEGRATION FEATURES
+================================================================================
+
+13.1 **File Operations**
+    * Import products from Excel/CSV
+    * Export reports to various formats
+    * File dialog handling via IPC
+
+13.2 **Menu Actions**
+    * Keyboard shortcuts for common operations
+    * System tray integration (future)
+    * Context menus
+
+13.3 **Window Management**
+    * Minimize, maximize, close
+    * Window state persistence
+    * Multiple monitor support
+
+================================================================================
+14. FIREBASE INTEGRATION
+================================================================================
+
+14.1 **Authentication**
+    * Email/password login
+    * User role management
+    * Custom claims for permissions
+
+14.2 **Database Operations**
+    * Real-time data synchronization
+    * Products collection
+    * Categories collection
+    * Orders collection
+    * Settings collection
+
+14.3 **Storage**
+    * File uploads (future feature)
+    * Backup data storage
+
+================================================================================
+15. DEVELOPMENT VS PRODUCTION MODES
+================================================================================
+
+15.1 **Development Mode**
+    * Hot reloading enabled
+    * DevTools open by default
+    * Console logging enabled
+    * Local Firebase emulator (optional)
+
+15.2 **Production Mode**
+    * Optimized build
+    * Error logging to file
+    * Single instance enforcement
+    * Packaged resources loading

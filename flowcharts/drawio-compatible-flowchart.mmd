@@ -1,0 +1,88 @@
+graph TD
+  start_node((Start)) --> login_node[Login]
+  login_node -- input email and password --> input_credentials[/input email and password/]
+  login_node --> valid_decision{Valid?}
+  valid_decision -- Yes --> dashboard_node[Dashboard]
+  valid_decision -- No --> login_node
+
+  login_node -- Don't have an account? --> signup_decision{Don't have an account?}
+  signup_decision -- Yes --> signup_input[/Input username, email, password, role/]
+  signup_input --> signup_node[Signup]
+  signup_decision -- No --> login_node
+
+  dashboard_node -- Show todays orders, pending orders, sales overtime, inventory breakdown --> dashboard_display[/Show todays orders, pending orders, sales overtime, inventory breakdown/]
+  dashboard_node --> products_node[Products]
+  dashboard_node --> order_processing_node[Order Processing]
+  dashboard_node --> reports_node[Reports]
+
+  products_node -- Shows product list --> products_display[/Shows product list/]
+
+  order_processing_node --> new_order_node[New Order]
+  new_order_node --> orders_node[Orders]
+  orders_node --> A_connector((A))
+
+  subgraph Order Creation
+    A_connector --> select_item[Select item on product list]
+    select_item --> order_cart[Order Cart]
+    order_cart --> input_quantity[/input quantity of item, customer details/]
+    input_quantity --> process_order[Process Order]
+    process_order --> displays_orders[/Displays Orders/]
+  end
+
+  reports_node --> sales_report_node[Sales Report]
+  reports_node --> inventory_report_node[Inventory Report]
+
+  sales_report_node --> C_connector((C))
+  subgraph Sales Reporting
+    C_connector --> select_date_sales[Select Date]
+    select_date_sales --> displays_summary[/Displays Orders Summary and Best Selling Products/]
+    displays_summary --> export_sales_decision{Want to export report in pdf?}
+    export_sales_decision -- Yes --> sales_exported[/Sales Report exported into PDF/]
+    export_sales_decision -- No --> sales_report_node
+  end
+
+  inventory_report_node --> D_connector((D))
+  subgraph Inventory Reporting
+    D_connector --> select_date_inventory[Select Date]
+    select_date_inventory --> displays_stock_movement[/Displays Stock Movement/]
+    displays_stock_movement --> export_inventory_decision{Want to export report in pdf?}
+    export_inventory_decision -- Yes --> inventory_exported[/Inventory Report exported into PDF/]
+    export_inventory_decision -- No --> inventory_report_node
+  end
+
+  reports_node -- No --> logout_node[Logout]
+
+  style start_node fill:#fff,stroke:#333,stroke-width:2px
+  style login_node fill:#fff,stroke:#333,stroke-width:2px
+  style input_credentials fill:#fff,stroke:#333,stroke-width:2px
+  style valid_decision fill:#fff,stroke:#333,stroke-width:2px
+  style dashboard_node fill:#fff,stroke:#333,stroke-width:2px
+  style signup_decision fill:#fff,stroke:#333,stroke-width:2px
+  style signup_input fill:#fff,stroke:#333,stroke-width:2px
+  style signup_node fill:#fff,stroke:#333,stroke-width:2px
+  style dashboard_display fill:#fff,stroke:#333,stroke-width:2px
+  style products_node fill:#fff,stroke:#333,stroke-width:2px
+  style order_processing_node fill:#fff,stroke:#333,stroke-width:2px
+  style reports_node fill:#fff,stroke:#333,stroke-width:2px
+  style products_display fill:#fff,stroke:#333,stroke-width:2px
+  style new_order_node fill:#fff,stroke:#333,stroke-width:2px
+  style orders_node fill:#fff,stroke:#333,stroke-width:2px
+  style A_connector fill:#fff,stroke:#333,stroke-width:2px
+  style select_item fill:#fff,stroke:#333,stroke-width:2px
+  style order_cart fill:#fff,stroke:#333,stroke-width:2px
+  style input_quantity fill:#fff,stroke:#333,stroke-width:2px
+  style process_order fill:#fff,stroke:#333,stroke-width:2px
+  style displays_orders fill:#fff,stroke:#333,stroke-width:2px
+  style sales_report_node fill:#fff,stroke:#333,stroke-width:2px
+  style inventory_report_node fill:#fff,stroke:#333,stroke-width:2px
+  style C_connector fill:#fff,stroke:#333,stroke-width:2px
+  style select_date_sales fill:#fff,stroke:#333,stroke-width:2px
+  style displays_summary fill:#fff,stroke:#333,stroke-width:2px
+  style export_sales_decision fill:#fff,stroke:#333,stroke-width:2px
+  style sales_exported fill:#fff,stroke:#333,stroke-width:2px
+  style D_connector fill:#fff,stroke:#333,stroke-width:2px
+  style select_date_inventory fill:#fff,stroke:#333,stroke-width:2px
+  style displays_stock_movement fill:#fff,stroke:#333,stroke-width:2px
+  style export_inventory_decision fill:#fff,stroke:#333,stroke-width:2px
+  style inventory_exported fill:#fff,stroke:#333,stroke-width:2px
+  style logout_node fill:#fff,stroke:#333,stroke-width:2px

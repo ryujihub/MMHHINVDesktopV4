@@ -1,0 +1,153 @@
+<mxfile host="app.diagrams.net" modified="2025-10-04T10:00:00.000Z" agent="ChatGPT GPT-5" version="24.7.4">
+  <diagram id="ProductsFlow" name="Products Page Flowchart">
+    <mxGraphModel dx="1300" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- Start -->
+        <mxCell id="A" value="Start Products Page" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="100" y="40" width="160" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Initialize -->
+        <mxCell id="B" value="Initialize State & Fetch Data" style="rhombus;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="100" y="120" width="220" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="C" value="useInventory: products, categories, actions" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="60" y="210" width="250" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="D" value="useAuth: hasPermission" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="340" y="210" width="200" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="E" value="useState: openDialog, editingProduct, searchQuery, snackbar, formData" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="580" y="210" width="320" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Product Display -->
+        <mxCell id="F" value="Display Products DataGrid" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="60" y="300" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Permission -->
+        <mxCell id="G" value="User has 'edit' permission?" style="rhombus;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="340" y="300" width="200" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="H" value="Add Product Button" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="580" y="300" width="180" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="I" value="handleOpenDialog (new product)" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="820" y="300" width="200" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Search -->
+        <mxCell id="J" value="Search Query?" style="rhombus;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="380" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="K" value="Filter Products" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="260" y="380" width="150" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="L" value="Display All Products" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="440" y="380" width="160" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Dialog -->
+        <mxCell id="W" value="Add/Edit Product Dialog" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="820" y="380" width="200" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="X" value="Form Fields: Name, Code, Category, Prices, Stock, etc." style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="820" y="450" width="280" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="AA" value="handleSubmit" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="820" y="530" width="150" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="BB" value="Validation: Required fields, Unique Product Code?" style="rhombus;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="820" y="610" width="280" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="CC" value="Show Snackbar: Error" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="610" width="180" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="EE" value="updateProduct (id, data)" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="820" y="690" width="180" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="FF" value="addProduct (data)" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="690" width="160" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="GG" value="Show Snackbar: Success" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="820" y="760" width="200" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="HH" value="handleCloseDialog" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="820" y="830" width="180" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Connections -->
+        <mxCell id="edgeAtoB" edge="1" source="A" target="B" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeBtoC" edge="1" source="B" target="C" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeBtoD" edge="1" source="B" target="D" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeBtoE" edge="1" source="B" target="E" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeCtoF" edge="1" source="C" target="F" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeDtoG" edge="1" source="D" target="G" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeGtoH" value="Yes" edge="1" source="G" target="H" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeHtoI" edge="1" source="H" target="I" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeItoW" edge="1" source="I" target="W" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeWtoX" edge="1" source="W" target="X" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeXtoAA" edge="1" source="X" target="AA" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeAAtoBB" edge="1" source="AA" target="BB" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeBBtoCC" value="No" edge="1" source="BB" target="CC" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeBBtoEE" value="Yes" edge="1" source="BB" target="EE" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeEEtoGG" edge="1" source="EE" target="GG" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeFFtoGG" edge="1" source="FF" target="GG" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edgeGGtoHH" edge="1" source="GG" target="HH" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -295,3 +295,23 @@ ipcMain.handle('save-file', async (event, options) => {
   const result = await dialog.showSaveDialog(mainWindow, options);
   return result;
 });
+
+ipcMain.handle('read-file', async (event, filePath) => {
+  try {
+    const content = await fs.promises.readFile(filePath, 'utf-8');
+    return content;
+  } catch (error) {
+    console.error('Error reading file in main process:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('write-file', async (event, filePath, content) => {
+  try {
+    await fs.promises.writeFile(filePath, content, 'utf-8');
+    return { success: true };
+  } catch (error) {
+    console.error('Error writing file in main process:', error);
+    throw error;
+  }
+});

@@ -1,0 +1,58 @@
+graph TD
+    A[Start Products Page] --> B{Initialize State & Fetch Data};
+    B --> C[useInventory: products, categories, actions];
+    B --> D[useAuth: hasPermission];
+    B --> E[useState: openDialog, editingProduct, searchQuery, snackbar, formData];
+
+    C --> F[Display Products DataGrid];
+    D --> G{User has 'edit' permission?};
+    G -- Yes --> H[Add Product Button];
+    H --> I[handleOpenDialog (new product)];
+
+    F --> J{Search Query?};
+    J -- Yes --> K[Filter Products];
+    J -- No --> L[Display All Products];
+    K --> F;
+    L --> F;
+
+    F --> M[DataGrid Columns Rendered];
+    M --> N[Product Code, Name, Category, Prices, Stock, Unit, Status];
+    M --> O[Physical Count (Editable)];
+    O --> P[updatePhysicalCount];
+    M --> Q[Actions Column];
+    Q --> R{User has 'edit' permission?};
+    R -- Yes --> S[Edit Button];
+    S --> T[handleEdit (product)];
+    R -- Yes --> U[Delete Button];
+    U --> V[handleDelete (productId)];
+
+    H --> W[Add/Edit Product Dialog];
+    T --> W;
+
+    W --> X[Form Fields: Name, Code, Category, Prices, Stock, etc.];
+    X --> Y[handleInputChange];
+    W --> Z[Submit Button];
+    Z --> AA[handleSubmit];
+
+    AA --> BB{Validation: Required fields, Unique Product Code?};
+    BB -- No --> CC[Show Snackbar: Error];
+    BB -- Yes --> DD{Editing Existing Product?};
+    DD -- Yes --> EE[updateProduct (id, data)];
+    DD -- No --> FF[addProduct (data)];
+    EE --> GG[Show Snackbar: Success];
+    FF --> GG;
+    GG --> HH[handleCloseDialog];
+
+    F --> II[Import Button];
+    II --> JJ[handleImport (Electron API)];
+    F --> KK[Export Button];
+    KK --> LL[handleExport (Electron API)];
+
+    V --> MM[Confirm Delete?];
+    MM -- Yes --> NN[deleteProduct (productId)];
+    NN --> OO[Show Snackbar: Product Deleted];
+
+    P --> F;
+    NN --> F;
+    OO --> F;
+    HH --> F;

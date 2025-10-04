@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // File operations
   selectFile: (options) => ipcRenderer.invoke('select-file', options),
   saveFile: (options) => ipcRenderer.invoke('save-file', options),
+  readFile: (filePath) => ipcRenderer.invoke('read-file', filePath), // Original: Expose readFile
+  writeFile: (filePath, content) => ipcRenderer.invoke('write-file', filePath, content), // Original: Expose writeFile
   
   // Menu events
   onImportProducts: (callback) => ipcRenderer.on('import-products', callback),
