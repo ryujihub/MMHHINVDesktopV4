@@ -29,6 +29,7 @@ export const InventoryProvider = ({ children }) => {
 
       const productWithDefaults = {
         ...product,
+        sellingPrice: 0, // Ensure sellingPrice is explicitly set to 0 or removed if not needed
         physicalCount: currentStock, // Default physicalCount to currentStock
         inventoryVariance: 0, // Default inventoryVariance to 0
         targetGap: targetGap, // Calculate initial targetGap
@@ -55,14 +56,16 @@ export const InventoryProvider = ({ children }) => {
 
   const updateProduct = async (id, updates) => {
     try {
-      await firebaseData.products.update(id, updates);
+      // Remove sellingPrice from updates if it exists
+      const { sellingPrice, ...updatesWithoutSellingPrice } = updates;
+      await firebaseData.products.update(id, updatesWithoutSellingPrice);
       
       // Update local state and get updated product
       let updatedProduct;
       setProducts(prev => {
         const newProducts = prev.map(product => {
           if (product.id === id) {
-            updatedProduct = { ...product, ...updates };
+            updatedProduct = { ...product, ...updatesWithoutSellingPrice };
             return updatedProduct;
           }
           return product;

@@ -5,7 +5,7 @@ A modern, desktop-based inventory management system built with React, Electron, 
 ## 🚀 Features
 
 ### Core Functionality
-- **Full CRUD Operations**: Add, update, delete, and view products, categories, suppliers, and customers
+- **Full CRUD Operations**: Add, update, delete, and view products and categories
 - **Inventory Management**: Track stock levels, reorder points, and product locations
 - **User Role Management**: Admin and Staff permissions with different access levels
 - **Real-time Dashboard**: Overview of inventory status, low stock alerts, and key metrics
@@ -87,12 +87,8 @@ The system comes with pre-configured demo accounts:
 1. **Dashboard** - Overview and key metrics
 2. **Products** - Inventory management
 3. **Categories** - Product categorization
-4. **Suppliers** - Vendor management
-5. **Customers** - Customer database
-6. **Purchase Orders** - Incoming inventory
-7. **Sales Orders** - Outgoing inventory
-8. **Reports** - Analytics and insights
-9. **Settings** - System configuration
+4. **Sales Orders** - Outgoing inventory
+5. **Reports** - Analytics and insights
 
 ## 🚀 Quick Start Guide
 
@@ -237,7 +233,6 @@ For support and questions:
 *   **Sales Order Management:** Creating, processing, and tracking sales orders, including customer details, product lists, and order status.
 *   **Reporting:** Generation of sales reports, inventory reports, and other custom reports to provide business insights.
 *   **Notifications:** System notifications for important events like low stock or new orders.
-*   **Settings:** Configuration options for the application, such as user preferences or system parameters.
 *   **Technology Stack:** React for the frontend, Electron for desktop application wrapping, and Firebase (Firestore, Authentication, Cloud Messaging) for backend services.
 
 ### 3. Delimitations:
@@ -248,3 +243,8 @@ For support and questions:
 *   **No Payment Gateway Integration:** The application will not handle direct payment processing; it will only record sales transactions.
 *   **No Barcode/QR Code Scanning Integration:** While possible, advanced hardware integration for barcode or QR code scanning for inventory management is not part of the initial scope.
 *   **No Complex Financial Accounting:** The reporting features will focus on inventory and sales data, not comprehensive financial accounting.
+
+### 4. Data Flow Diagrams (DFD)
+A comprehensive Data Flow Diagram (DFD) has been created to illustrate the system's data flow at both Level 0 and Level 1. This diagram details the interactions between external entities, processes, and data stores within the Metro Manila Hills Hardware Inventory Management System.
+
+- **DFD File**: `flowcharts/dfd_updated.drawio.xml`

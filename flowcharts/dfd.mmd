@@ -1,0 +1,15 @@
+graph TD
+    subgraph "LEVEL 0 DFD - Metro Manila Hills Hardware Inventory Management System"
+        A[User (Admin/Staff)] -- Reports/Updates --> P0(0.0 Metro Manila Hills Hardware Inventory Management System)
+        P0 -- Inventory Data --> D1[D1: Product Data]
+        P0 -- Order Data --> D2[D2: Order Data]
+        P0 -- Reports --> D3[D3: Report Data]
+    end
+
+    subgraph "LEVEL 1 DFD - Expanded Processes of Metro Manila Hills Hardware Inventory Management System"
+        P1(1.0 Manage Inventory) -- Update Stock --> D1_L1[D1: Product Data]
+        D1_L1 -- Read Product Info --> P1
+        P2(2.0 Manage Orders) -- Save Order Data --> D2_L1[D2: Order Data]
+        P3(3.0 Generate Reports) -- Generate Report Data --> D3_L1[D3: Report Data]
+        P3 -- Display Report Data --> P4(4.0 View Dashboard)
+    end

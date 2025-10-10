@@ -55,7 +55,6 @@ const Products = () => {
     productCode: '',
     category: '',
     price: '',
-    sellingPrice: '',
     currentStock: '0',
     minimumStock: '0',
     physicalCount: '0', // Add physicalCount to initial state
@@ -140,15 +139,6 @@ const Products = () => {
     { 
       field: 'price', 
       headerName: 'Cost Price', 
-      width: 100,
-      valueFormatter: (params) => {
-        if (params.value == null || params.value === undefined) return '₱0.00';
-        return `₱${Number(params.value).toFixed(2)}`;
-      }
-    },
-    { 
-      field: 'sellingPrice', 
-      headerName: 'Selling Price', 
       width: 100,
       valueFormatter: (params) => {
         if (params.value == null || params.value === undefined) return '₱0.00';
@@ -290,7 +280,6 @@ const Products = () => {
         sku: '',
         category: '',
         price: '',
-        sellingPrice: '',
         currentStock: '',
         minimumStock: '',
         reorderPoint: '',
@@ -351,7 +340,6 @@ const Products = () => {
       sku: finalProductCode,
       productCode: finalProductCode, // Add the Firebase field
       price: formData.price ? Number(formData.price) : 0,
-      sellingPrice: formData.sellingPrice ? Number(formData.sellingPrice) : 0,
       currentStock: formData.currentStock ? Number(formData.currentStock) : 0,
       physicalCount: formData.physicalCount ? Number(formData.physicalCount) : 0, // Include physicalCount
       reorderPoint: formData.reorderPoint ? Number(formData.reorderPoint) : 0,
@@ -591,25 +579,6 @@ const Products = () => {
                 }}
                 margin="normal"
                 inputProps={{ min: 0, step: 0.01 }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Selling Price (₱)"
-                type="number"
-                value={formData.sellingPrice}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || isNaN(value)) {
-                    handleInputChange('sellingPrice', '');
-                  } else {
-                    handleInputChange('sellingPrice', parseFloat(value));
-                  }
-                }}
-                margin="normal"
-                inputProps={{ min: 0, step: 0.01 }}
-                helperText="Price to sell to customers"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
