@@ -17,7 +17,7 @@ export const InventoryProvider = ({ children }) => {
   // State for all inventory data
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [orders, setOrders] = useState([]); // Rename sales state to orders
+  const [orders, setOrders] = useState([]); 
   const [loading, setLoading] = useState(true);
 
   // CRUD Operations for Products
@@ -385,6 +385,17 @@ export const InventoryProvider = ({ children }) => {
     loadData();
   }, []);
 
+  // Calculate total lost amount from inventory variance
+  const totalLostAmount = products.reduce((sum, product) => {
+    const variance = product.inventoryVariance || 0;
+    const cost = Number(product.cost) || Number(product.sellingPrice) || Number(product.price) || 0;
+    // Only consider negative variance (missing items)
+    if (variance < 0) {
+      return sum + (Math.abs(variance) * cost);
+    }
+    return sum;
+  }, 0);
+
   const value = {
     // Data
     products,
@@ -409,6 +420,7 @@ export const InventoryProvider = ({ children }) => {
     getLowStockProducts,
     updatePhysicalCount,
     recordSale, // Add recordSale to context value
+    totalLostAmount, // Add totalLostAmount to context value
   };
 
   return (

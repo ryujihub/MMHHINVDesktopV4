@@ -21,7 +21,8 @@ import {
   AttachMoney as MoneyIcon,
   Add as AddIcon,
   Visibility as ViewIcon,
-  AdminPanelSettings as AdminIcon
+  AdminPanelSettings as AdminIcon,
+  MoneyOff as MoneyOffIcon // Import MoneyOffIcon for lost amount
 } from '@mui/icons-material';
 import { useInventory } from '../contexts/InventoryContext.js';
 import { useAuth } from '../contexts/AuthContext.js';
@@ -32,7 +33,7 @@ import { collection, query, orderBy, limit as fbLimit, onSnapshot } from 'fireba
 import { db } from '../config/firebase.js';
 
 const Dashboard = () => {
-  const { products, categories, getLowStockProducts } = useInventory();
+  const { products, categories, getLowStockProducts, totalLostAmount } = useInventory();
   const { user, isAdmin, getUserRole, hasPermission } = useAuth();
   const navigate = useNavigate();
   const [adminSetupMessage, setAdminSetupMessage] = useState('');
@@ -266,7 +267,15 @@ const Dashboard = () => {
             onAction={() => navigate('/products')}
           />
         </Grid>
-
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Total Lost Amount"
+            value={`₱${isNaN(totalLostAmount) ? '0.00' : totalLostAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            subtitle="Due to inventory variance"
+            icon={<WarningIcon />}
+            color="#ef4444"
+          />
+        </Grid>
       </Grid>
 
       {/* Charts and Quick Actions */}

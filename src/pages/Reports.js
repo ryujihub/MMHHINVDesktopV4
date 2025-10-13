@@ -36,7 +36,7 @@ import {
 const currency = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const Reports = () => {
-  const { orders, products } = useInventory(); // Use 'orders' instead of 'sales'
+  const { orders, products, totalLostAmount } = useInventory(); // Use 'orders' instead of 'sales' and add totalLostAmount
 
   if (!orders || !products) { // Check for orders and products
     return <Box sx={{ p: 3 }}>Loading reports...</Box>;
@@ -250,6 +250,12 @@ const Reports = () => {
           <Card><CardContent>
             <Typography color="textSecondary">Avg Order Value</Typography>
             <Typography variant="h5">{currency(kpis.avgOrderValue)}</Typography>
+          </CardContent></Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card><CardContent>
+            <Typography color="textSecondary">Total Lost Amount</Typography>
+            <Typography variant="h5">{currency(totalLostAmount)}</Typography>
           </CardContent></Card>
         </Grid>
       </Grid>
