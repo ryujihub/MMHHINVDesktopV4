@@ -22,28 +22,51 @@ export const AuthProvider = ({ children }) => {
       if (firebaseUser) {
         try {
           // Get user profile from Firestore to get role and permissions
-          const { getDoc, doc } = await import('firebase/firestore');
+          const { getDoc, doc, setDoc } = await import('firebase/firestore');
           const { db } = await import('../config/firebase.js');
-          
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userDoc = await getDoc(userDocRef);
           let userData = {};
-          
+
           if (userDoc.exists()) {
             userData = userDoc.data();
+          } else {
+            // First time login - create user document with default role
+            console.log('Creating new user document for:', firebaseUser.email);
+            const defaultUserData = {
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              name: firebaseUser.displayName || firebaseUser.email,
+              role: 'admin', // Default to admin for first user
+              permissions: ['view', 'edit', 'delete', 'admin'],
+              createdAt: new Date().toISOString(),
+              lastLogin: new Date().toISOString(),
+              loginCount: 1
+            };
+
+            try {
+              await setDoc(userDocRef, defaultUserData);
+              userData = defaultUserData;
+              console.log('User document created successfully');
+            } catch (error) {
+              console.error('Error creating user document:', error);
+              // Continue with basic user data as fallback
+            }
           }
-          
+
           // User is signed in
           const userObject = {
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             name: userData.name || firebaseUser.displayName || firebaseUser.email,
-            role: userData.role || 'staff',
+            role: userData.role || 'admin', // Default to admin if not set
             permissions: userData.permissions || ['view', 'edit']
           };
-          
+
           console.log('User data loaded:', userObject);
           console.log('User document from Firestore:', userData);
-          
+
           setUser(userObject);
           setIsAuthenticated(true);
         } catch (error) {
@@ -53,7 +76,7 @@ export const AuthProvider = ({ children }) => {
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             name: firebaseUser.displayName || firebaseUser.email,
-            role: 'staff',
+            role: 'admin', // Default to admin as fallback
             permissions: ['view', 'edit']
           });
           setIsAuthenticated(true);

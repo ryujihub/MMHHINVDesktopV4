@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Card,
@@ -8,22 +8,17 @@ import {
   Typography,
   Alert,
   InputAdornment,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  CircularProgress
+  IconButton
 } from '@mui/material';
 import {
   Visibility,
   VisibilityOff,
   Store as StoreIcon,
   Lock as LockIcon,
-  AdminPanelSettings as AdminIcon
+  Security as SecurityIcon
 } from '@mui/icons-material';
+import ReCAPTCHA from 'react-google-recaptcha';
 import { useAuth } from '../contexts/AuthContext.js';
-import { setupCurrentUserAsAdmin, checkCurrentUserRole } from '../utils/setupAdminUser.js';
 
 
 
@@ -33,43 +28,63 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showAdminSetup, setShowAdminSetup] = useState(false);
-  const [adminSetupLoading, setAdminSetupLoading] = useState(false);
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaQuestion, setCaptchaQuestion] = useState('');
+  const [correctCaptchaAnswer, setCorrectCaptchaAnswer] = useState(0);
+  const [recaptchaToken, setRecaptchaToken] = useState(null);
+  const recaptchaRef = useRef(null);
   const { login } = useAuth();
+
+  // Handle reCAPTCHA verification
+  const handleRecaptchaChange = (token) => {
+    setRecaptchaToken(token);
+  };
+
+  // Handle reCAPTCHA expiry
+  const handleRecaptchaExpired = () => {
+    setRecaptchaToken(null);
+  };
+
+  // Generate CAPTCHA question
+  const generateCaptcha = () => {
+    const num1 = Math.floor(Math.random() * 10) + 1;
+    const num2 = Math.floor(Math.random() * 10) + 1;
+    const question = `${num1} + ${num2}`;
+    setCaptchaQuestion(question);
+    setCorrectCaptchaAnswer(num1 + num2);
+    setCaptchaAnswer('');
+  };
+
+  // Generate initial CAPTCHA on component mount
+  React.useEffect(() => {
+    generateCaptcha();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Validate CAPTCHA first
+    const userAnswer = parseInt(captchaAnswer);
+    if (!userAnswer || userAnswer !== correctCaptchaAnswer) {
+      setError('Please solve the security question correctly');
+      generateCaptcha(); // Generate new CAPTCHA on failure
+      return;
+    }
+
     setLoading(true);
 
     try {
       const result = await login(email, password);
       if (!result.success) {
         setError(result.message);
+        generateCaptcha(); // Generate new CAPTCHA on login failure
       }
     } catch (error) {
       setError('An unexpected error occurred');
+      generateCaptcha(); // Generate new CAPTCHA on error
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleAdminSetup = async () => {
-    setAdminSetupLoading(true);
-    try {
-      const result = await setupCurrentUserAsAdmin();
-      if (result.success) {
-        setShowAdminSetup(false);
-        setError('');
-        // Show success message
-        alert('Admin setup completed! Please refresh the page and try logging in again.');
-      } else {
-        setError(result.message);
-      }
-    } catch (error) {
-      setError('Failed to setup admin user: ' + error.message);
-    } finally {
-      setAdminSetupLoading(false);
     }
   };
 
@@ -115,7 +130,7 @@ const Login = () => {
               <StoreIcon sx={{ fontSize: 40, color: 'white' }} />
             </Box>
             <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: '#1e293b', mb: 1 }}>
-              MMH Hardware
+              Metro Manila Hills Hardware
             </Typography>
             <Typography variant="body1" sx={{ color: '#64748b' }}>
               Inventory Management System
@@ -167,6 +182,35 @@ const Login = () => {
               }}
             />
 
+            {/* Simple Math CAPTCHA for now */}
+            <Box sx={{ mt: 2, mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <SecurityIcon fontSize="small" />
+                Security Question
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end' }}>
+                <TextField
+                  fullWidth
+                  label="Solve the question"
+                  value={captchaAnswer}
+                  onChange={(e) => setCaptchaAnswer(e.target.value)}
+                  placeholder="Enter the answer"
+                  type="number"
+                  required
+                  helperText={captchaQuestion ? `What is ${captchaQuestion}?` : 'Solve the math question above'}
+                />
+                <Button
+                  type="button"
+                  variant="outlined"
+                  size="small"
+                  onClick={generateCaptcha}
+                  sx={{ minWidth: 'auto', px: 2 }}
+                >
+                  ↻
+                </Button>
+              </Box>
+            </Box>
+
             {error && (
               <Alert severity="error" sx={{ mt: 2 }}>
                 {error}
@@ -178,7 +222,7 @@ const Login = () => {
               fullWidth
               variant="contained"
               size="large"
-              disabled={loading}
+              disabled={loading || !captchaAnswer}
               sx={{
                 mt: 3,
                 mb: 2,
@@ -193,55 +237,8 @@ const Login = () => {
             </Button>
           </form>
 
-          {/* Admin Setup Button */}
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <Button
-              variant="outlined"
-              color="secondary"
-              startIcon={<AdminIcon />}
-              onClick={() => setShowAdminSetup(true)}
-              sx={{ textTransform: 'none' }}
-            >
-              Setup Admin Access
-            </Button>
-          </Box>
-
         </CardContent>
       </Card>
-
-      {/* Admin Setup Dialog */}
-      <Dialog open={showAdminSetup} onClose={() => setShowAdminSetup(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AdminIcon color="primary" />
-            Admin Setup
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            This will set up your current user account as an administrator with full access to all system features.
-          </Alert>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            This setup is required for first-time users to establish proper permissions in the system. Make sure you're logged in with the account you want to use as an administrator.
-          </Typography>
-          <Alert severity="warning">
-            <strong>Security Note:</strong> This action creates an admin user in the system. Only use this if you're authorized to set up administrative access.
-          </Alert>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowAdminSetup(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleAdminSetup}
-            variant="contained"
-            disabled={adminSetupLoading}
-            startIcon={adminSetupLoading ? <CircularProgress size={16} /> : <AdminIcon />}
-          >
-            {adminSetupLoading ? 'Setting up...' : 'Setup Admin User'}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
     </Box>
   );

@@ -53,6 +53,7 @@
     "git-filter-repo": "^0.0.30",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-google-recaptcha": "^3.1.0",
     "react-router-dom": "^6.20.1",
     "react-scripts": "^5.0.1",
     "react-to-print": "^2.2.5",
