@@ -95,6 +95,11 @@ export const AuthProvider = ({ children }) => {
 
   const createUser = async (email, password, userData) => {
     try {
+      // Check if current user is admin - SECURITY REQUIREMENT
+      if (!isAdmin()) {
+        return { success: false, message: 'Unauthorized: Admin access required to create users' };
+      }
+
       const result = await firebaseAuth.createUser(email, password, userData);
       return result;
     } catch (error) {

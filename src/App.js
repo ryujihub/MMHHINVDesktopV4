@@ -15,6 +15,7 @@ import Products from './pages/Products.js';
 import Categories from './pages/Categories.js';
 import Reports from './pages/Reports.js';
 import Settings from './pages/Settings.js';
+import UserManagement from './pages/UserManagement.js';
 import Profile from './pages/Profile.js';
 import Login from './pages/Login.js';
 
@@ -26,6 +27,12 @@ import { InventoryProvider } from './contexts/InventoryContext.js';
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
+
+// Admin Route Component
+const AdminRoute = ({ children }) => {
+  const { isAuthenticated, isAdmin } = useAuth();
+  return isAuthenticated && isAdmin() ? children : <Navigate to="/" replace />;
 };
 
 // Main App Content
@@ -81,7 +88,8 @@ const AppContent = () => {
             <Route path="/" element={<Dashboard />} />
             <Route path="/products" element={<Products />} />
             <Route path="/categories" element={<Categories />} />
-            <Route path="/reports" element={<Reports />} />
+            <Route path="/reports" element={<AdminRoute><Reports /></AdminRoute>} />
+            <Route path="/user-management" element={<AdminRoute><UserManagement /></AdminRoute>} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<Navigate to="/" replace />} />

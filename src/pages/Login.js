@@ -9,164 +9,23 @@ import {
   Alert,
   InputAdornment,
   IconButton,
-  Divider,
   Dialog,
   DialogTitle,
   DialogContent,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem
+  DialogActions,
+  CircularProgress
 } from '@mui/material';
 import {
   Visibility,
   VisibilityOff,
   Store as StoreIcon,
-  Lock as LockIcon
+  Lock as LockIcon,
+  AdminPanelSettings as AdminIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext.js';
+import { setupCurrentUserAsAdmin, checkCurrentUserRole } from '../utils/setupAdminUser.js';
 
-// Create User Form Component
-const CreateUserForm = ({ onSuccess, onError }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: 'staff'
-  });
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const { createUser } = useAuth();
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (formData.password !== formData.confirmPassword) {
-      onError('Passwords do not match');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      onError('Password must be at least 6 characters long');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const result = await createUser(formData.email, formData.password, {
-        name: formData.name,
-        role: formData.role,
-        permissions: formData.role === 'admin' ? ['view', 'edit', 'delete', 'admin'] : ['view', 'edit']
-      });
-
-      if (result.success) {
-        setSuccess(true);
-        setFormData({
-          name: '',
-          email: '',
-          password: '',
-          confirmPassword: '',
-          role: 'staff'
-        });
-        // Auto-close after 2 seconds
-        setTimeout(() => {
-          onSuccess();
-        }, 2000);
-      } else {
-        onError(result.message);
-      }
-    } catch (error) {
-      onError('Failed to create user');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      {success && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          User created successfully! You can now log in with the new account.
-        </Alert>
-      )}
-      
-      <TextField
-        fullWidth
-        label="Full Name"
-        value={formData.name}
-        onChange={(e) => handleInputChange('name', e.target.value)}
-        margin="normal"
-        required
-      />
-      
-      <TextField
-        fullWidth
-        label="Email"
-        type="email"
-        value={formData.email}
-        onChange={(e) => handleInputChange('email', e.target.value)}
-        margin="normal"
-        required
-      />
-      
-      <TextField
-        fullWidth
-        label="Password"
-        type="password"
-        value={formData.password}
-        onChange={(e) => handleInputChange('password', e.target.value)}
-        margin="normal"
-        required
-        helperText="Minimum 6 characters"
-      />
-      
-      <TextField
-        fullWidth
-        label="Confirm Password"
-        type="password"
-        value={formData.confirmPassword}
-        onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-        margin="normal"
-        required
-      />
-      
-      <FormControl fullWidth margin="normal">
-        <InputLabel>Role</InputLabel>
-        <Select
-          value={formData.role}
-          onChange={(e) => handleInputChange('role', e.target.value)}
-          label="Role"
-        >
-          <MenuItem value="staff">Staff</MenuItem>
-          <MenuItem value="admin">Admin</MenuItem>
-        </Select>
-      </FormControl>
-      
-      <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-        <Button
-          type="submit"
-          variant="contained"
-          fullWidth
-          disabled={loading}
-        >
-          {loading ? 'Creating...' : 'Create User'}
-        </Button>
-        <Button
-          variant="outlined"
-          fullWidth
-          onClick={() => onSuccess()}
-        >
-          Cancel
-        </Button>
-      </Box>
-    </form>
-  );
-};
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -174,8 +33,9 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showCreateUser, setShowCreateUser] = useState(false);
-  const { login, createUser } = useAuth();
+  const [showAdminSetup, setShowAdminSetup] = useState(false);
+  const [adminSetupLoading, setAdminSetupLoading] = useState(false);
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -191,6 +51,25 @@ const Login = () => {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAdminSetup = async () => {
+    setAdminSetupLoading(true);
+    try {
+      const result = await setupCurrentUserAsAdmin();
+      if (result.success) {
+        setShowAdminSetup(false);
+        setError('');
+        // Show success message
+        alert('Admin setup completed! Please refresh the page and try logging in again.');
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      setError('Failed to setup admin user: ' + error.message);
+    } finally {
+      setAdminSetupLoading(false);
     }
   };
 
@@ -314,39 +193,58 @@ const Login = () => {
             </Button>
           </form>
 
-          {/* Create User Link */}
-          <Box sx={{ textAlign: 'center', mt: 2 }}>
-            <Typography variant="body2" sx={{ color: '#64748b', mb: 1 }}>
-              Don't have an account?
-            </Typography>
+          {/* Admin Setup Button */}
+          <Box sx={{ mt: 2, textAlign: 'center' }}>
             <Button
-              variant="text"
-              color="primary"
-              onClick={() => setShowCreateUser(true)}
+              variant="outlined"
+              color="secondary"
+              startIcon={<AdminIcon />}
+              onClick={() => setShowAdminSetup(true)}
               sx={{ textTransform: 'none' }}
             >
-              Create New User
+              Setup Admin Access
             </Button>
           </Box>
+
         </CardContent>
       </Card>
 
-      {/* Create User Dialog */}
-      <Dialog open={showCreateUser} onClose={() => setShowCreateUser(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Create New User</DialogTitle>
+      {/* Admin Setup Dialog */}
+      <Dialog open={showAdminSetup} onClose={() => setShowAdminSetup(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AdminIcon color="primary" />
+            Admin Setup
+          </Box>
+        </DialogTitle>
         <DialogContent>
-          <CreateUserForm 
-            onSuccess={() => {
-              setShowCreateUser(false);
-              setError('');
-            }}
-            onError={(message) => setError(message)}
-          />
+          <Alert severity="info" sx={{ mb: 2 }}>
+            This will set up your current user account as an administrator with full access to all system features.
+          </Alert>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            This setup is required for first-time users to establish proper permissions in the system. Make sure you're logged in with the account you want to use as an administrator.
+          </Typography>
+          <Alert severity="warning">
+            <strong>Security Note:</strong> This action creates an admin user in the system. Only use this if you're authorized to set up administrative access.
+          </Alert>
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowAdminSetup(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleAdminSetup}
+            variant="contained"
+            disabled={adminSetupLoading}
+            startIcon={adminSetupLoading ? <CircularProgress size={16} /> : <AdminIcon />}
+          >
+            {adminSetupLoading ? 'Setting up...' : 'Setup Admin User'}
+          </Button>
+        </DialogActions>
       </Dialog>
+
     </Box>
   );
 };
 
-export { CreateUserForm };
 export default Login;

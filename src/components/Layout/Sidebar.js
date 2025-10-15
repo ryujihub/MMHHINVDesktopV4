@@ -18,7 +18,8 @@ import {
   Receipt as ReceiptIcon,
   Assessment as AssessmentIcon,
   Settings as SettingsIcon,
-  Store as StoreIcon
+  Store as StoreIcon,
+  People as PeopleIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext.js';
@@ -46,6 +47,12 @@ const menuItems = [
     ]
   },
   {
+    title: 'Management',
+    items: [
+      { text: 'User Management', icon: <PeopleIcon />, path: '/user-management' }
+    ]
+  },
+  {
     title: 'System',
     items: [
       { text: 'Settings', icon: <SettingsIcon />, path: '/settings' }
@@ -56,7 +63,7 @@ const menuItems = [
 const Sidebar = ({ open, toggleSidebar }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -106,62 +113,69 @@ const Sidebar = ({ open, toggleSidebar }) => {
       </Box>
 
       <Box sx={{ flexGrow: 1, overflow: '80vh' }}>
-        {menuItems.map((section, sectionIndex) => (
-          <Box key={sectionIndex}>
-            <ListSubheader
-              sx={{
-                backgroundColor: 'transparent',
-                color: '#64748b',
-                fontWeight: 'bold',
-                fontSize: '0.75rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                pt: 2,
-                pb: 1
-              }}
-            >
-              {section.title}
-            </ListSubheader>
-            <List dense>
-              {section.items.map((item, itemIndex) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <ListItem key={itemIndex} disablePadding>
-                    <ListItemButton
-                      onClick={() => handleNavigation(item.path)}
-                      sx={{
-                        mx: 1,
-                        borderRadius: 2,
-                        backgroundColor: isActive ? '#3b82f6' : 'transparent',
-                        color: isActive ? 'white' : '#e2e8f0',
-                        '&:hover': {
-                          backgroundColor: isActive ? '#2563eb' : '#334155'
-                        },
-                        '& .MuiListItemIcon-root': {
-                          color: isActive ? 'white' : '#94a3b8'
-                        }
-                      }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 40 }}>
-                        {item.icon}
-                      </ListItemIcon>
-                      <ListItemText 
-                        primary={item.text}
-                        primaryTypographyProps={{
-                          fontSize: '0.875rem',
-                          fontWeight: isActive ? 600 : 400
+        {menuItems.map((section, sectionIndex) => {
+          // Filter out admin-only sections for non-admin users
+          if ((section.title === 'Reports' || section.title === 'Management') && !isAdmin()) {
+            return null;
+          }
+
+          return (
+            <Box key={sectionIndex}>
+              <ListSubheader
+                sx={{
+                  backgroundColor: 'transparent',
+                  color: '#64748b',
+                  fontWeight: 'bold',
+                  fontSize: '0.75rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  pt: 2,
+                  pb: 1
+                }}
+              >
+                {section.title}
+              </ListSubheader>
+              <List dense>
+                {section.items.map((item, itemIndex) => {
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <ListItem key={itemIndex} disablePadding>
+                      <ListItemButton
+                        onClick={() => handleNavigation(item.path)}
+                        sx={{
+                          mx: 1,
+                          borderRadius: 2,
+                          backgroundColor: isActive ? '#3b82f6' : 'transparent',
+                          color: isActive ? 'white' : '#e2e8f0',
+                          '&:hover': {
+                            backgroundColor: isActive ? '#2563eb' : '#334155'
+                          },
+                          '& .MuiListItemIcon-root': {
+                            color: isActive ? 'white' : '#94a3b8'
+                          }
                         }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                );
-              })}
-            </List>
-            {sectionIndex < menuItems.length - 1 && (
-              <Divider sx={{ borderColor: '#334155', mx: 2, my: 1 }} />
-            )}
-          </Box>
-        ))}
+                      >
+                        <ListItemIcon sx={{ minWidth: 40 }}>
+                          {item.icon}
+                        </ListItemIcon>
+                        <ListItemText 
+                          primary={item.text}
+                          primaryTypographyProps={{
+                            fontSize: '0.875rem',
+                            fontWeight: isActive ? 600 : 400
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  );
+                })}
+              </List>
+              {sectionIndex < menuItems.length - 1 && (
+                <Divider sx={{ borderColor: '#334155', mx: 2, my: 1 }} />
+              )}
+            </Box>
+          );
+        })}
       </Box>
 
       <Box sx={{ p: 2, borderTop: '1px solid #334155' }}>

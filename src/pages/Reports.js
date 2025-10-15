@@ -14,10 +14,12 @@ import {
   TableBody,
   TableHead,
   TableRow,
-  TableCell
+  TableCell,
+  Alert
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useInventory } from '../contexts/InventoryContext.js';
+import { useAuth } from '../contexts/AuthContext.js';
 import {
   ResponsiveContainer,
   LineChart,
@@ -37,6 +39,21 @@ const currency = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFr
 
 const Reports = () => {
   const { orders, products, totalLostAmount } = useInventory(); // Use 'orders' instead of 'sales' and add totalLostAmount
+  const { isAdmin, user } = useAuth();
+
+  // Check if user is admin
+  if (!isAdmin()) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Access Denied: You don't have permission to view Reports & Analytics.
+        </Alert>
+        <Typography variant="body1">
+          This page is restricted to administrators only. Please contact your administrator if you need access to reports.
+        </Typography>
+      </Box>
+    );
+  }
 
   if (!orders || !products) { // Check for orders and products
     return <Box sx={{ p: 3 }}>Loading reports...</Box>;

@@ -33,7 +33,148 @@ import {
   Save as SaveIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext.js';
-import { CreateUserForm } from './Login.js';
+// Admin User Management Component
+const AdminUserManagement = ({ onSuccess, onError }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: 'staff'
+  });
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const { createUser, isAdmin } = useAuth();
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (formData.password !== formData.confirmPassword) {
+      onError('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      onError('Password must be at least 6 characters long');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await createUser(formData.email, formData.password, {
+        name: formData.name,
+        role: formData.role,
+        permissions: formData.role === 'admin' ? ['view', 'edit', 'delete', 'admin'] : ['view', 'edit']
+      });
+
+      if (result.success) {
+        setSuccess(true);
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          role: 'staff'
+        });
+        // Auto-close after 2 seconds
+        setTimeout(() => {
+          onSuccess();
+        }, 2000);
+      } else {
+        onError(result.message);
+      }
+    } catch (error) {
+      onError('Failed to create user');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Box component="form" onSubmit={handleSubmit}>
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          User created successfully! The user can now log in with their credentials.
+        </Alert>
+      )}
+
+      <TextField
+        fullWidth
+        label="Full Name"
+        value={formData.name}
+        onChange={(e) => handleInputChange('name', e.target.value)}
+        margin="normal"
+        required
+      />
+
+      <TextField
+        fullWidth
+        label="Email"
+        type="email"
+        value={formData.email}
+        onChange={(e) => handleInputChange('email', e.target.value)}
+        margin="normal"
+        required
+      />
+
+      <TextField
+        fullWidth
+        label="Password"
+        type="password"
+        value={formData.password}
+        onChange={(e) => handleInputChange('password', e.target.value)}
+        margin="normal"
+        required
+        helperText="Minimum 6 characters"
+      />
+
+      <TextField
+        fullWidth
+        label="Confirm Password"
+        type="password"
+        value={formData.confirmPassword}
+        onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+        margin="normal"
+        required
+      />
+
+      <TextField
+        fullWidth
+        select
+        label="Role"
+        value={formData.role}
+        onChange={(e) => handleInputChange('role', e.target.value)}
+        margin="normal"
+        required
+      >
+        <MenuItem value="staff">Staff</MenuItem>
+        <MenuItem value="admin">Admin</MenuItem>
+      </TextField>
+
+      <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          disabled={loading}
+        >
+          {loading ? 'Creating...' : 'Create User'}
+        </Button>
+        <Button
+          variant="outlined"
+          fullWidth
+          onClick={() => onSuccess()}
+        >
+          Cancel
+        </Button>
+      </Box>
+    </Box>
+  );
+};
 import { settingsService } from '../services/settingsService.js';
 
 const Settings = () => {
@@ -282,7 +423,7 @@ const Settings = () => {
       <Dialog open={showCreateUser} onClose={() => setShowCreateUser(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Create New User</DialogTitle>
         <DialogContent>
-          <CreateUserForm 
+          <AdminUserManagement
             onSuccess={handleCreateUserSuccess}
             onError={handleCreateUserError}
           />
