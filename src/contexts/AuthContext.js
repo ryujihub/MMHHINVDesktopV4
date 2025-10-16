@@ -61,7 +61,10 @@ export const AuthProvider = ({ children }) => {
             email: firebaseUser.email,
             name: userData.name || firebaseUser.displayName || firebaseUser.email,
             role: userData.role || 'admin', // Default to admin if not set
-            permissions: userData.permissions || ['view', 'edit']
+            permissions: userData.permissions || ['view', 'edit'],
+            createdAt: userData.createdAt || null,
+            lastLogin: userData.lastLogin || null,
+            loginCount: userData.loginCount || 0
           };
 
           console.log('User data loaded:', userObject);
@@ -77,7 +80,10 @@ export const AuthProvider = ({ children }) => {
             email: firebaseUser.email,
             name: firebaseUser.displayName || firebaseUser.email,
             role: 'admin', // Default to admin as fallback
-            permissions: ['view', 'edit']
+            permissions: ['view', 'edit'],
+            createdAt: null,
+            lastLogin: new Date().toISOString(),
+            loginCount: 0
           });
           setIsAuthenticated(true);
         }
@@ -96,7 +102,14 @@ export const AuthProvider = ({ children }) => {
     try {
       const result = await firebaseAuth.login(email, password);
       if (result.success) {
-        setUser(result.user);
+        // Ensure the user object includes all necessary fields
+        const userWithDefaults = {
+          ...result.user,
+          createdAt: result.user.createdAt || null,
+          lastLogin: result.user.lastLogin || new Date().toISOString(),
+          loginCount: result.user.loginCount || 0
+        };
+        setUser(userWithDefaults);
         setIsAuthenticated(true);
       }
       return result;

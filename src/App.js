@@ -37,7 +37,6 @@ const AdminRoute = ({ children }) => {
 
 // Main App Content
 const AppContent = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const { isAuthenticated } = useAuth();
 
   // Handle Electron menu events
@@ -69,16 +68,16 @@ const AppContent = () => {
 
   return (
     <Layout>
-      <Sidebar open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+      <Sidebar open={true} />
       <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-        <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+        <Header />
         <Box
           component="main"
           sx={{
             flexGrow: 1,
-            p: 3,
+            p: location.pathname === '/products' ? 1 : 3,
             width: '100%', // Ensure it takes full width
-            maxWidth: '1400px', // Max width for content
+            maxWidth: location.pathname === '/products' ? 'none' : '1400px', // Remove max width for products page
             mx: 'auto', // Center the content
             overflowY: 'auto', // Allow vertical scrolling for content
             height: 'calc(100vh - 64px)', // Adjust height based on header (assuming header height is 64px)

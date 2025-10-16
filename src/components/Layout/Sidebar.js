@@ -80,39 +80,129 @@ const Sidebar = ({ open, toggleSidebar }) => {
         '& .MuiDrawer-paper': {
           width: drawerWidth,
           boxSizing: 'border-box',
-          backgroundColor: '#1e293b',
+          background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
           color: 'white',
-          borderRight: '1px solid #334155'
+          borderRight: '2px solid transparent',
+          borderImage: 'linear-gradient(180deg, #3b82f6, #1e293b, #3b82f6) 1',
+          boxShadow: '4px 0 15px rgba(0, 0, 0, 0.3)',
+          transition: 'all 0.3s ease-in-out'
         }
       }}
     >
-      <Box sx={{ p: 2, borderBottom: '1px solid #334155' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <StoreIcon sx={{ fontSize: 32, color: '#3b82f6' }} />
+      <Box sx={{
+        p: 2,
+        borderBottom: '1px solid rgba(59, 130, 246, 0.3)',
+        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(30, 41, 59, 0.8))',
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '2px',
+          background: 'linear-gradient(90deg, #3b82f6, transparent, #3b82f6)'
+        }
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{
+            p: 1,
+            borderRadius: '8px',
+            background: 'linear-gradient(135deg, #3b82f6, #1e40af)',
+            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <StoreIcon sx={{ fontSize: 20, color: 'white' }} />
+          </Box>
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'white' }}>
+            <Typography variant="h6" sx={{
+              fontWeight: 'bold',
+              color: 'white',
+              fontSize: '0.9rem',
+              lineHeight: 1.2
+            }}>
               MMH Hardware
             </Typography>
-            <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+            <Typography variant="caption" sx={{
+              color: '#94a3b8',
+              fontSize: '0.65rem',
+              fontWeight: 500
+            }}>
               Inventory Management
             </Typography>
           </Box>
         </Box>
       </Box>
 
-      <Box sx={{ p: 2, borderBottom: '1px solid #334155' }}>
-        <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1 }}>
+      <Box sx={{
+        p: 2,
+        borderBottom: '1px solid rgba(59, 130, 246, 0.2)',
+        background: 'rgba(30, 41, 59, 0.5)',
+        backdropFilter: 'blur(10px)'
+      }}>
+        <Typography variant="body2" sx={{
+          color: '#94a3b8',
+          mb: 1,
+          fontSize: '0.75rem',
+          fontWeight: 500
+        }}>
           Welcome back,
         </Typography>
-        <Typography variant="subtitle2" sx={{ color: 'white', fontWeight: 'bold' }}>
+        <Typography variant="subtitle2" sx={{
+          color: 'white',
+          fontWeight: 'bold',
+          fontSize: '0.9rem',
+          mb: 0.5
+        }}>
           {user?.name || 'User'}
         </Typography>
-        <Typography variant="caption" sx={{ color: '#64748b' }}>
-          {user?.role === 'admin' ? 'Administrator' : 'Staff Member'}
-        </Typography>
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <Box sx={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            backgroundColor: user?.role === 'admin' ? '#10b981' : '#f59e0b',
+            boxShadow: `0 0 6px ${user?.role === 'admin' ? '#10b981' : '#f59e0b'}`
+          }} />
+          <Typography variant="caption" sx={{
+            color: '#64748b',
+            fontSize: '0.7rem',
+            fontWeight: 500
+          }}>
+            {user?.role === 'admin' ? 'Administrator' : 'Staff Member'}
+          </Typography>
+        </Box>
       </Box>
 
-      <Box sx={{ flexGrow: 1, overflow: '80vh' }}>
+      <Box sx={{
+        flexGrow: 1,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        '&::-webkit-scrollbar': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-track': {
+          backgroundColor: 'transparent',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          backgroundColor: '#64748b',
+          borderRadius: '3px',
+          opacity: 0.7,
+        },
+        '&::-webkit-scrollbar-thumb:hover': {
+          backgroundColor: '#94a3b8',
+          opacity: 1,
+        },
+        // Firefox scrollbar styling
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#64748b transparent',
+      }}>
         {menuItems.map((section, sectionIndex) => {
           // Filter out admin-only sections for non-admin users
           if ((section.title === 'Reports' || section.title === 'Management') && !isAdmin()) {
@@ -123,14 +213,18 @@ const Sidebar = ({ open, toggleSidebar }) => {
             <Box key={sectionIndex}>
               <ListSubheader
                 sx={{
-                  backgroundColor: 'transparent',
-                  color: '#64748b',
+                  backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                  color: '#3b82f6',
                   fontWeight: 'bold',
-                  fontSize: '0.75rem',
+                  fontSize: '0.65rem',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  pt: 2,
-                  pb: 1
+                  letterSpacing: '0.8px',
+                  pt: 1.5,
+                  pb: 1,
+                  px: 1.5,
+                  borderLeft: '3px solid #3b82f6',
+                  mx: 1,
+                  borderRadius: '0 4px 4px 0'
                 }}
               >
                 {section.title}
@@ -144,25 +238,49 @@ const Sidebar = ({ open, toggleSidebar }) => {
                         onClick={() => handleNavigation(item.path)}
                         sx={{
                           mx: 1,
-                          borderRadius: 2,
-                          backgroundColor: isActive ? '#3b82f6' : 'transparent',
+                          my: 0.2,
+                          borderRadius: 1.5,
+                          backgroundColor: isActive
+                            ? 'linear-gradient(135deg, #3b82f6, #1e40af)'
+                            : 'rgba(59, 130, 246, 0.05)',
                           color: isActive ? 'white' : '#e2e8f0',
+                          transition: 'all 0.2s ease-in-out',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          '&::before': isActive ? {
+                            content: '""',
+                            position: 'absolute',
+                            left: 0,
+                            top: 0,
+                            bottom: 0,
+                            width: '3px',
+                            background: 'linear-gradient(180deg, #60a5fa, #3b82f6)',
+                            borderRadius: '0 2px 2px 0'
+                          } : {},
                           '&:hover': {
-                            backgroundColor: isActive ? '#2563eb' : '#334155'
+                            backgroundColor: isActive
+                              ? 'linear-gradient(135deg, #2563eb, #1e40af)'
+                              : 'rgba(59, 130, 246, 0.15)',
+                            transform: 'translateX(2px)',
+                            '& .MuiListItemIcon-root': {
+                              color: isActive ? 'white' : '#60a5fa'
+                            }
                           },
                           '& .MuiListItemIcon-root': {
-                            color: isActive ? 'white' : '#94a3b8'
+                            color: isActive ? 'white' : '#94a3b8',
+                            transition: 'color 0.2s ease-in-out'
                           }
                         }}
                       >
-                        <ListItemIcon sx={{ minWidth: 40 }}>
+                        <ListItemIcon sx={{ minWidth: 35 }}>
                           {item.icon}
                         </ListItemIcon>
-                        <ListItemText 
+                        <ListItemText
                           primary={item.text}
                           primaryTypographyProps={{
-                            fontSize: '0.875rem',
-                            fontWeight: isActive ? 600 : 400
+                            fontSize: '0.8rem',
+                            fontWeight: isActive ? 600 : 500,
+                            letterSpacing: '0.2px'
                           }}
                         />
                       </ListItemButton>
@@ -171,16 +289,42 @@ const Sidebar = ({ open, toggleSidebar }) => {
                 })}
               </List>
               {sectionIndex < menuItems.length - 1 && (
-                <Divider sx={{ borderColor: '#334155', mx: 2, my: 1 }} />
+                <Divider sx={{
+                  borderColor: 'rgba(59, 130, 246, 0.2)',
+                  mx: 1.5,
+                  my: 1,
+                  borderWidth: '1px'
+                }} />
               )}
             </Box>
           );
         })}
       </Box>
 
-      <Box sx={{ p: 2, borderTop: '1px solid #334155' }}>
-        <Typography variant="caption" sx={{ color: '#64748b', textAlign: 'center', display: 'block' }}>
-          Version 1.0.0
+      <Box sx={{
+        p: 1.5,
+        borderTop: '1px solid rgba(59, 130, 246, 0.2)',
+        background: 'rgba(15, 23, 42, 0.8)',
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '1px',
+          background: 'linear-gradient(90deg, transparent, #3b82f6, transparent)'
+        }
+      }}>
+        <Typography variant="caption" sx={{
+          color: '#64748b',
+          textAlign: 'center',
+          display: 'block',
+          fontSize: '0.6rem',
+          fontWeight: 500,
+          letterSpacing: '0.3px'
+        }}>
+          © 2025 MMH Hardware • v1.0.0
         </Typography>
       </Box>
     </Drawer>

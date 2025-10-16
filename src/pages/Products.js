@@ -27,7 +27,9 @@ import {
   Delete as DeleteIcon,
   FileUpload as UploadIcon,
   FileDownload as DownloadIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Fullscreen as FullscreenIcon,
+  FullscreenExit as FullscreenExitIcon
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useInventory } from '../contexts/InventoryContext.js';
@@ -50,6 +52,7 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(''); // New state for category filter
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [isFullscreen, setIsFullscreen] = useState(false); // New state for fullscreen mode
   const [formData, setFormData] = useState({
     name: '',
     productCode: '',
@@ -389,134 +392,193 @@ const Products = () => {
     });
   };
 
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  // Handle escape key to exit fullscreen
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+
+    if (isFullscreen) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    } else {
+      document.body.style.overflow = 'unset'; // Restore scrolling
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isFullscreen]);
+
   return (
-    <Box>
-      {/* Page Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 1, color: '#3b82f6' }}>
-            Products
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Manage your inventory products and categories
-          </Typography>
-        </Box>
-        {hasPermission('edit') && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog()}
-            sx={{
-              backgroundColor: '#3b82f6',
-              '&:hover': {
-                backgroundColor: '#2563eb'
-              }
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Compact Search and Filter Bar - Hidden in fullscreen */}
+      {!isFullscreen && (
+        <Box sx={{ display: 'flex', gap: 2, mb: 1, alignItems: 'center', flexShrink: 0 }}>
+          <TextField
+            variant="outlined"
+            size="small"
+            placeholder="Search products..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
             }}
-          >
-            Add Product
-          </Button>
+            sx={{ minWidth: 250 }}
+          />
+          <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Filter by Category</InputLabel>
+            <Select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              label="Filter by Category"
+            >
+              <MenuItem value="">
+                <em>All Categories</em>
+              </MenuItem>
+              {categories.map((category) => (
+                <MenuItem key={category.id} value={category.name}>
+                  {category.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {hasPermission('edit') && (
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenDialog()}
+              sx={{
+                backgroundColor: '#3b82f6',
+                '&:hover': {
+                  backgroundColor: '#2563eb'
+                }
+              }}
+            >
+              Add Product
+            </Button>
+          )}
+          <Tooltip title={isFullscreen ? "Exit Fullscreen" : "Fullscreen Table"}>
+            <IconButton
+              onClick={toggleFullscreen}
+              sx={{
+                color: isFullscreen ? '#f59e0b' : '#6b7280',
+                '&:hover': {
+                  backgroundColor: isFullscreen ? '#fef3c7' : '#f3f4f6',
+                }
+              }}
+            >
+              {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )}
+
+      {/* Fullscreen Mode Header */}
+      {isFullscreen && (
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          p: 2,
+          backgroundColor: '#f8f9fa',
+          borderBottom: '1px solid #e0e0e0',
+          flexShrink: 0
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            Products Inventory - Fullscreen View
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              {filteredProducts.length} products • Press ESC to exit fullscreen
+            </Typography>
+            <Tooltip title="Exit Fullscreen">
+              <IconButton
+                onClick={toggleFullscreen}
+                sx={{
+                  color: '#f59e0b',
+                  '&:hover': {
+                    backgroundColor: '#fef3c7',
+                  }
+                }}
+              >
+                <FullscreenExitIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </Box>
+      )}
+
+      {/* Fullscreen DataGrid */}
+      <Box sx={{
+        flexGrow: 1,
+        minHeight: 0,
+        position: isFullscreen ? 'fixed' : 'static',
+        top: isFullscreen ? 0 : 'auto',
+        left: isFullscreen ? 0 : 'auto',
+        right: isFullscreen ? 0 : 'auto',
+        bottom: isFullscreen ? 0 : 'auto',
+        zIndex: isFullscreen ? 9999 : 'auto',
+        backgroundColor: 'white'
+      }}>
+        {loading ? (
+          <Box sx={{ p: 4, textAlign: 'center', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+              Loading products...
+            </Typography>
+          </Box>
+        ) : filteredProducts.length === 0 ? (
+          <Box sx={{ p: 4, textAlign: 'center', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+              {searchQuery ? 'No products found matching your search.' : 'No products available. Add your first product to get started!'}
+            </Typography>
+          </Box>
+        ) : (
+          <DataGrid
+            rows={filteredProducts}
+            columns={columns}
+            pageSize={25}
+            rowsPerPageOptions={[25, 50, 100]}
+            disableSelectionOnClick
+            sx={{
+              height: '100%',
+              '& .MuiDataGrid-root': {
+                border: 'none',
+              },
+              '& .MuiDataGrid-cell': {
+                borderBottom: '1px solid #e0e0e0',
+                padding: '12px 16px',
+              },
+              '& .MuiDataGrid-columnHeaders': {
+                backgroundColor: '#f5f5f5',
+                borderBottom: '2px solid #e0e0e0',
+              },
+              '& .MuiDataGrid-columnHeaderTitle': {
+                fontWeight: 'bold',
+              },
+              '& .MuiDataGrid-row': {
+                '&:nth-of-type(odd)': {
+                  backgroundColor: '#fafafa',
+                },
+                '&:hover': {
+                  backgroundColor: '#e3f2fd',
+                },
+              },
+              '& .MuiDataGrid-footerContainer': {
+                borderTop: '1px solid #e0e0e0',
+              },
+            }}
+          />
         )}
       </Box>
-
-      {/* Search and Actions Bar */}
-      <Card sx={{ mb: 3, boxShadow: 3, borderRadius: 2 }}>
-        <CardContent>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                variant="outlined"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-                  sx: { borderRadius: 1 }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth variant="outlined" sx={{ borderRadius: 1 }}>
-                <InputLabel>Filter by Category</InputLabel>
-                <Select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  label="Filter by Category"
-                >
-                  <MenuItem value="">
-                    <em>All Categories</em>
-                  </MenuItem>
-                  {categories.map((category) => (
-                    <MenuItem key={category.id} value={category.name}>
-                      {category.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-
-      {/* Products DataGrid */}
-      <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
-        <CardContent sx={{ p: 0 }}>
-          {loading ? (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
-                Loading products...
-              </Typography>
-            </Box>
-          ) : filteredProducts.length === 0 ? (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
-                {searchQuery ? 'No products found matching your search.' : 'No products available. Add your first product to get started!'}
-              </Typography>
-            </Box>
-          ) : (
-            <div className="table-responsive">
-              <DataGrid
-                rows={filteredProducts}
-                columns={columns}
-                pageSize={10}
-                rowsPerPageOptions={[10, 25, 50]}
-                disableSelectionOnClick
-                autoHeight
-                sx={{
-                  '& .MuiDataGrid-root': {
-                    border: 'none',
-                    borderRadius: 2,
-                  },
-                  '& .MuiDataGrid-cell': {
-                    borderBottom: '1px solid #e0e0e0',
-                    padding: '8px 16px',
-                  },
-                  '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: '#f5f5f5',
-                    borderBottom: '2px solid #e0e0e0',
-                    borderRadius: '8px 8px 0 0',
-                  },
-                  '& .MuiDataGrid-columnHeaderTitle': {
-                    fontWeight: 'bold',
-                  },
-                  '& .MuiDataGrid-row': {
-                    '&:nth-of-type(odd)': {
-                      backgroundColor: '#fafafa',
-                    },
-                    '&:hover': {
-                      backgroundColor: '#e3f2fd',
-                    },
-                  },
-                  '& .MuiDataGrid-footerContainer': {
-                    borderTop: '1px solid #e0e0e0',
-                    borderRadius: '0 0 8px 8px',
-                  },
-                }}
-              />
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Add/Edit Product Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>

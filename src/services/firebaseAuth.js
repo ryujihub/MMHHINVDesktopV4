@@ -15,21 +15,55 @@ export const firebaseAuth = {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      
+
       // Get user profile from Firestore
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+
       if (userDoc.exists()) {
-        return { success: true, user: { ...user, ...userDoc.data() } };
+        const userData = userDoc.data();
+
+        // Update last login and login count
+        const updatedData = {
+          lastLogin: new Date().toISOString(),
+          loginCount: (userData.loginCount || 0) + 1
+        };
+
+        // Update the document with new login info
+        await setDoc(userDocRef, updatedData, { merge: true });
+
+        // Merge updated data with existing user data
+        const mergedUserData = { ...userData, ...updatedData };
+
+        return { success: true, user: { ...user, ...mergedUserData } };
+      } else {
+        // First time login - create user document
+        const defaultUserData = {
+          uid: user.uid,
+          email: user.email,
+          name: user.displayName || user.email,
+          role: 'admin', // Default to admin for first user
+          permissions: ['view', 'edit', 'delete', 'admin'],
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString(),
+          loginCount: 1
+        };
+
+        try {
+          await setDoc(userDocRef, defaultUserData);
+          return { success: true, user: { ...user, ...defaultUserData } };
+        } catch (error) {
+          console.error('Error creating user document:', error);
+          return { success: true, user };
+        }
       }
-      
-      return { success: true, user };
     } catch (error) {
       console.error('Login error:', error);
-      return { 
-        success: false, 
-        message: error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' 
-          ? 'Invalid email or password' 
-          : 'Login failed. Please try again.' 
+      return {
+        success: false,
+        message: error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password'
+          ? 'Invalid email or password'
+          : 'Login failed. Please try again.'
       };
     }
   },

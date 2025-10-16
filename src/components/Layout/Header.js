@@ -6,7 +6,6 @@ import {
   IconButton,
   Typography,
   Box,
-  InputBase,
   Menu,
   MenuItem,
   Avatar,
@@ -14,59 +13,17 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  Search as SearchIcon,
   AccountCircle as AccountCircleIcon,
   Person as PersonIcon,
   Settings as SettingsIcon
 } from '@mui/icons-material';
-import { styled, alpha } from '@mui/material/styles/index.js';
 import { useAuth } from '../../contexts/AuthContext.js';
 import { useInventory } from '../../contexts/InventoryContext.js';
-
-const Search = styled('div')(({ theme }) => ({
-  position: 'relative',
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.common.white, 0.15),
-  '&:hover': {
-    backgroundColor: alpha(theme.palette.common.white, 0.25),
-  },
-  marginRight: theme.spacing(2),
-  marginLeft: 0,
-  width: '90%',
-  [theme.breakpoints.up('sm')]: {
-    marginLeft: theme.spacing(3),
-    width: 'auto',
-  },
-}));
-
-const SearchIconWrapper = styled('div')(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: '100%',
-  position: 'absolute',
-  pointerEvents: 'none',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: 'inherit',
-  '& .MuiInputBase-input': {
-    padding: theme.spacing(1, 1, 1, 0),
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create('width'),
-    width: '100%',
-    [theme.breakpoints.up('md')]: {
-      width: '20ch',
-    },
-  },
-}));
 
 const Header = ({ onMenuClick }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const handleProfileClick = () => {
     handleProfileMenuClose();
@@ -91,11 +48,6 @@ const Header = ({ onMenuClick }) => {
     handleProfileMenuClose();
   };
 
-  const handleSearch = (event) => {
-    setSearchQuery(event.target.value);
-    // Implement search functionality
-  };
-
   return (
     <AppBar 
       position="static" 
@@ -107,31 +59,8 @@ const Header = ({ onMenuClick }) => {
       }}
     >
       <Toolbar>
-        <IconButton
-          edge="start"
-          color="inherit"
-          aria-label="menu"
-          onClick={onMenuClick}
-          sx={{ mr: 2 }}
-        >
-          <MenuIcon />
-        </IconButton>
 
-        <Typography variant="h6" component="div" sx={{ flexGrow: 0, mr: 3, color: '#1e293b', fontWeight: 'bold' }}>
-          MMH Hardware
-        </Typography>
-
-        <Search>
-          <SearchIconWrapper>
-            <SearchIcon />
-          </SearchIconWrapper>
-          <StyledInputBase
-            placeholder="Search products, categories..."
-            inputProps={{ 'aria-label': 'search' }}
-            value={searchQuery}
-            onChange={handleSearch}
-          />
-        </Search>
+        
 
         <Box sx={{ flexGrow: 1 }} />
 
