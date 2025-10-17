@@ -8,6 +8,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
   Grid,
   List,
   ListItem,
@@ -21,7 +22,11 @@ import {
   MenuItem,
   Switch,
   FormControlLabel,
-  CircularProgress
+  CircularProgress,
+  Divider,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -30,7 +35,13 @@ import {
   Person as PersonIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Save as SaveIcon
+  Save as SaveIcon,
+  Backup as BackupIcon,
+  Restore as RestoreIcon,
+  Download as DownloadIcon,
+  Upload as UploadIcon,
+  ExpandMore as ExpandMoreIcon,
+  Warning as WarningIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext.js';
 // Admin User Management Component
@@ -177,6 +188,195 @@ const AdminUserManagement = ({ onSuccess, onError }) => {
 };
 import { settingsService } from '../services/settingsService.js';
 
+// Backup Management Component - Admin Only
+const BackupManagement = ({ onSuccess, onError }) => {
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [restoreLoading, setRestoreLoading] = useState(false);
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [backupStats, setBackupStats] = useState(null);
+  const { user } = useAuth();
+
+  const handleExportBackup = async () => {
+    setBackupLoading(true);
+    try {
+      const result = await settingsService.exportBackup();
+      onSuccess('Backup exported successfully! Check your downloads folder.');
+    } catch (error) {
+      onError('Failed to export backup: ' + error.message);
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const handleImportBackup = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setRestoreLoading(true);
+    try {
+      const result = await settingsService.importBackup(file, user?.uid);
+      if (result.success) {
+        setShowRestoreDialog(false);
+        onSuccess('Backup restored successfully! All data has been imported.');
+      } else {
+        onError('Failed to restore backup: ' + result.message);
+      }
+    } catch (error) {
+      onError('Failed to restore backup: ' + error.message);
+    } finally {
+      setRestoreLoading(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
+
+  const handlePreviewBackup = async () => {
+    setBackupLoading(true);
+    try {
+      const backupData = await settingsService.backupAllData();
+      const stats = {
+        inventory: backupData.collections.inventory?.length || 0,
+        categories: backupData.collections.categories?.length || 0,
+        orders: backupData.collections.orders?.length || 0,
+        users: backupData.collections.users?.length || 0,
+        settings: backupData.collections.settings?.length || 0,
+        activity: backupData.collections.activity?.length || 0,
+        timestamp: backupData.timestamp
+      };
+      setBackupStats(stats);
+    } catch (error) {
+      onError('Failed to preview backup: ' + error.message);
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+        <Button
+          variant="outlined"
+          startIcon={<DownloadIcon />}
+          onClick={handlePreviewBackup}
+          disabled={backupLoading}
+        >
+          {backupLoading ? 'Loading...' : 'Preview Backup'}
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={<BackupIcon />}
+          onClick={handleExportBackup}
+          disabled={backupLoading}
+        >
+          {backupLoading ? 'Exporting...' : 'Export Backup'}
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<RestoreIcon />}
+          onClick={() => setShowRestoreDialog(true)}
+          disabled={restoreLoading}
+        >
+          {restoreLoading ? 'Restoring...' : 'Import Backup'}
+        </Button>
+      </Box>
+
+      {backupStats && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              📊 Backup Preview
+            </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Created: {new Date(backupStats.timestamp).toLocaleString()}
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={6} sm={3}>
+                <Typography variant="body2" color="primary">
+                  Inventory Items
+                </Typography>
+                <Typography variant="h6">
+                  {backupStats.inventory}
+                </Typography>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Typography variant="body2" color="primary">
+                  Categories
+                </Typography>
+                <Typography variant="h6">
+                  {backupStats.categories}
+                </Typography>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Typography variant="body2" color="primary">
+                  Sales Orders
+                </Typography>
+                <Typography variant="h6">
+                  {backupStats.orders}
+                </Typography>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Typography variant="body2" color="primary">
+                  Users
+                </Typography>
+                <Typography variant="h6">
+                  {backupStats.users}
+                </Typography>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Restore Dialog */}
+      <Dialog open={showRestoreDialog} onClose={() => setShowRestoreDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <WarningIcon color="warning" />
+            Import Backup Data
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              <strong>Warning:</strong> This will replace all current data with the backup data.
+              This action cannot be undone. Make sure you have a current backup before proceeding.
+            </Typography>
+          </Alert>
+          <Typography variant="body2" gutterBottom>
+            Select a backup file to restore:
+          </Typography>
+          <input
+            accept=".json"
+            style={{ display: 'none' }}
+            id="backup-file-input"
+            type="file"
+            onChange={handleImportBackup}
+          />
+          <label htmlFor="backup-file-input">
+            <Button
+              variant="outlined"
+              component="span"
+              startIcon={<UploadIcon />}
+              fullWidth
+              sx={{ mt: 1 }}
+            >
+              Choose Backup File
+            </Button>
+          </label>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+            Only .json backup files are supported
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowRestoreDialog(false)}>
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+};
+
 const Settings = () => {
   const { user, isAdmin } = useAuth();
   const [showCreateUser, setShowCreateUser] = useState(false);
@@ -245,6 +445,22 @@ const Settings = () => {
     setSnackbar({
       open: true,
       message: `Error: ${message}`,
+      severity: 'error'
+    });
+  };
+
+  const handleBackupSuccess = (message) => {
+    setSnackbar({
+      open: true,
+      message: message,
+      severity: 'success'
+    });
+  };
+
+  const handleBackupError = (message) => {
+    setSnackbar({
+      open: true,
+      message: message,
       severity: 'error'
     });
   };
@@ -418,6 +634,36 @@ const Settings = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Backup Management Section - Admin Only */}
+      {isAdmin() && (
+        <Card sx={{ mt: 3 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <div>
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  💾 Data Backup & Restore
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Export and import all system data including inventory, sales, and settings.
+                </Typography>
+              </div>
+            </Box>
+
+            <Alert severity="info" sx={{ mb: 3 }}>
+              <Typography variant="body2">
+                <strong>Note:</strong> Backup includes all inventory items, categories, sales orders, user accounts, and system settings.
+                Restore will replace all current data with the backup data.
+              </Typography>
+            </Alert>
+
+            <BackupManagement
+              onSuccess={handleBackupSuccess}
+              onError={handleBackupError}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Create User Dialog */}
       <Dialog open={showCreateUser} onClose={() => setShowCreateUser(false)} maxWidth="sm" fullWidth>
