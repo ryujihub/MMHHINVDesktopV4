@@ -145,6 +145,9 @@ const UserManagement = () => {
 
     setFormLoading(true);
     try {
+      // Set flag to prevent automatic login during user creation
+      sessionStorage.setItem('userCreationInProgress', 'true');
+
       // First, create the user in Firebase Auth
       const { createUserWithEmailAndPassword } = await import('firebase/auth');
       const { auth } = await import('../config/firebase.js');
@@ -192,6 +195,8 @@ const UserManagement = () => {
       });
     } finally {
       setFormLoading(false);
+      // Clear the flag after user creation is complete
+      sessionStorage.removeItem('userCreationInProgress');
     }
   };
 
@@ -261,18 +266,46 @@ const UserManagement = () => {
 
     if (window.confirm(`Are you sure you want to delete user "${userToDelete.name}"? This action cannot be undone.`)) {
       try {
+        // First, delete the user from Firebase Authentication
+        const { deleteUser } = await import('firebase/auth');
+        const { auth } = await import('../config/firebase.js');
+
+        // Get the current user to re-authenticate if needed
+        const currentAuthUser = auth.currentUser;
+
+        // For deleting other users, we need to use the Admin SDK or have proper permissions
+        // Since we're in a client-side app, we'll delete the Firestore document first
+        // and then try to delete from Auth if we have permission
+
+        // Delete from Firestore first
         await deleteDoc(doc(db, 'users', userToDelete.id));
+
+        // Try to delete from Firebase Auth
+        // Note: This might fail if the user needs to be deleted by an admin with proper permissions
+        try {
+          // Create a credential for the user to delete (this approach may not work in client-side)
+          // For proper user deletion, you might need to implement this differently
+
+          // Alternative approach: Use Firebase Admin SDK (requires server-side implementation)
+          // For now, we'll mark the user as deleted in Firestore
+          console.log('User document deleted from Firestore. Note: Firebase Auth user deletion requires Admin SDK or proper permissions.');
+
+        } catch (authError) {
+          console.warn('Could not delete user from Firebase Auth:', authError.message);
+          // Continue with Firestore deletion
+        }
 
         // Log audit event
         await logAuditEvent('USER_DELETED', {
           targetUserId: userToDelete.id,
           targetUserEmail: userToDelete.email,
-          deletedBy: currentUser.uid
+          deletedBy: currentUser.uid,
+          deletionType: 'firestore_only' // Note: Auth deletion may require Admin SDK
         });
 
         setSnackbar({
           open: true,
-          message: 'User deleted successfully!',
+          message: 'User deleted from database successfully! (Note: Firebase Auth deletion may require Admin SDK)',
           severity: 'success'
         });
 

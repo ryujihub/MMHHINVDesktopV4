@@ -21,6 +21,16 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = firebaseAuth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
         try {
+          // Check if this is during user creation process
+          const isUserCreationProcess = sessionStorage.getItem('userCreationInProgress');
+
+          if (isUserCreationProcess) {
+            console.log('User creation in progress, skipping automatic login for new user');
+            // Don't change current user state during user creation
+            setLoading(false);
+            return;
+          }
+
           // Get user profile from Firestore to get role and permissions
           const { getDoc, doc, setDoc } = await import('firebase/firestore');
           const { db } = await import('../config/firebase.js');
@@ -32,7 +42,7 @@ export const AuthProvider = ({ children }) => {
           if (userDoc.exists()) {
             userData = userDoc.data();
           } else {
-            // First time login - create user document with default role
+            // Only create user document for actual sign-ins, not during user creation
             console.log('Creating new user document for:', firebaseUser.email);
             const defaultUserData = {
               uid: firebaseUser.uid,
