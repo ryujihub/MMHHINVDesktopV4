@@ -1,0 +1,7 @@
+- [ ] Analyze Firebase configuration in src/config/firebase.js
+- [ ] Examine Firebase data service in src/services/firebaseData.js
+- [ ] Check Firebase authentication service in src/services/firebaseAuth.js
+- [ ] Search for all collection() method calls in the codebase
+- [ ] Identify incorrect usage patterns causing the errors
+- [ ] Fix the Firebase collection() method calls
+- [ ] Test the application to verify fixes

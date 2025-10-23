@@ -43,7 +43,7 @@ import {
   FilterList as FilterIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext.js';
-import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, setDoc, serverTimestamp, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, setDoc, serverTimestamp, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase.js';
 
 const UserManagement = () => {
@@ -69,10 +69,29 @@ const UserManagement = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
 
-  // Load users on component mount
+  // Load users on component mount and set up real-time listener
   useEffect(() => {
     if (isAdmin()) {
       loadUsers();
+
+      // Set up real-time listener for user updates
+      const usersQuery = query(
+        collection(db, 'users'),
+        orderBy('createdAt', 'desc')
+      );
+
+      const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+        const usersData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          lastLogin: doc.data().lastLogin ? new Date(doc.data().lastLogin) : null
+        }));
+        setUsers(usersData);
+      }, (error) => {
+        console.error('Error in users real-time listener:', error);
+      });
+
+      return () => unsubscribe();
     }
   }, [isAdmin]);
 
@@ -179,7 +198,7 @@ const UserManagement = () => {
 
       setSnackbar({
         open: true,
-        message: `User created successfully! Temporary password: ${generatedPassword}`,
+        message: `User created successfully! `,
         severity: 'success'
       });
 
@@ -606,7 +625,7 @@ const UserManagement = () => {
 
             <Box sx={{ mt: 2, mb: 2 }}>
               <Typography variant="subtitle2" gutterBottom>
-                Temporary Password
+                Password
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 <TextField
@@ -634,7 +653,7 @@ const UserManagement = () => {
                 </Button>
               </Box>
               <Typography variant="caption" color="text.secondary">
-                Generate a secure temporary password for the new user
+                Generate a secure password for the new user
               </Typography>
             </Box>
 

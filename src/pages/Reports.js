@@ -101,7 +101,19 @@ const Reports = () => {
 
       {/* Report Options */}
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
+          <Card sx={{ height: '100%', cursor: 'pointer', transition: 'transform 0.2s', '&:hover': { transform: 'scale(1.02)' } }} onClick={() => navigate('/reports/comprehensive')}>
+            <CardContent sx={{ textAlign: 'center', p: 4 }}>
+              <AssessmentIcon sx={{ fontSize: 48, color: '#8b5cf6', mb: 2 }} />
+              <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>Full Business Report</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Complete inventory and sales analysis with business insights and trends.
+              </Typography>
+              <Button variant="contained" sx={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>View Full Report</Button>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
           <Card sx={{ height: '100%', cursor: 'pointer', transition: 'transform 0.2s', '&:hover': { transform: 'scale(1.02)' } }} onClick={() => navigate('/reports/sales')}>
             <CardContent sx={{ textAlign: 'center', p: 4 }}>
               <ReceiptIcon sx={{ fontSize: 48, color: '#3b82f6', mb: 2 }} />
@@ -113,7 +125,7 @@ const Reports = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
           <Card sx={{ height: '100%', cursor: 'pointer', transition: 'transform 0.2s', '&:hover': { transform: 'scale(1.02)' } }} onClick={() => navigate('/reports/inventory')}>
             <CardContent sx={{ textAlign: 'center', p: 4 }}>
               <InventoryIcon sx={{ fontSize: 48, color: '#10b981', mb: 2 }} />

@@ -47,8 +47,7 @@ const menuItems = [
     title: 'Reports',
     items: [
       { text: 'Reports & Analytics', icon: <AssessmentIcon />, path: '/reports', hasSubmenu: true, submenu: [
-        { text: 'Sales Report', icon: <ReceiptIcon />, path: '/reports/sales' },
-        { text: 'Inventory Report', icon: <InventoryIcon />, path: '/reports/inventory' }
+        { text: 'Full Business Report', icon: <AssessmentIcon />, path: '/reports/comprehensive' }
       ]}
     ]
   },

@@ -58,6 +58,7 @@ const Products = () => {
     productCode: '',
     category: '',
     price: '',
+    cost: '', // Add cost field for purchase price
     currentStock: '0',
     minimumStock: '0',
     physicalCount: '0', // Add physicalCount to initial state
@@ -86,6 +87,11 @@ const Products = () => {
     };
   };
 
+  // Count products missing cost data
+  const productsMissingCost = useMemo(() => {
+    return products.filter(product => !product.cost || product.cost <= 0).length;
+  }, [products]);
+
   // Filtered products based on search and category
   const filteredProducts = useMemo(() => {
     let currentProducts = products;
@@ -103,9 +109,17 @@ const Products = () => {
 
     // Apply category filter
     if (selectedCategory) {
-      currentProducts = currentProducts.filter(product =>
-        product.category === selectedCategory
-      );
+      if (selectedCategory === 'missing-cost') {
+        // Filter products missing cost data
+        currentProducts = currentProducts.filter(product =>
+          !product.cost || product.cost <= 0
+        );
+      } else {
+        // Filter by regular category
+        currentProducts = currentProducts.filter(product =>
+          product.category === selectedCategory
+        );
+      }
     }
 
     return currentProducts;
@@ -130,22 +144,58 @@ const Products = () => {
 
   // DataGrid columns
   const columns = [
-    { 
-      field: 'sku', 
-      headerName: 'Product Code', 
+    {
+      field: 'sku',
+      headerName: 'Product Code',
       width: 100,
       valueGetter: (params) => params.row.productCode || params.row.sku || ''
     },
     { field: 'name', headerName: 'Product Name', width: 200 },
     { field: 'category', headerName: 'Category', width: 130 },
 
-    { 
-      field: 'price', 
-      headerName: 'Cost Price', 
+    {
+      field: 'price',
+      headerName: 'Selling Price',
       width: 100,
       valueFormatter: (params) => {
         if (params.value == null || params.value === undefined) return '₱0.00';
         return `₱${Number(params.value).toFixed(2)}`;
+      }
+    },
+    {
+      field: 'cost',
+      headerName: 'Cost Price',
+      width: 100,
+      valueFormatter: (params) => {
+        if (params.value == null || params.value === undefined) return '₱0.00';
+        return `₱${Number(params.value).toFixed(2)}`;
+      }
+    },
+    {
+      field: 'costStatus',
+      headerName: 'Cost Status',
+      width: 100,
+      renderCell: (params) => {
+        const cost = params.row.cost || 0;
+        let color = 'default';
+        let label = 'Missing';
+
+        if (cost > 0) {
+          color = 'success';
+          label = 'Set';
+        } else {
+          color = 'warning';
+          label = 'Missing';
+        }
+
+        return (
+          <Chip
+            label={label}
+            color={color}
+            size="small"
+            title={cost > 0 ? 'Cost data available' : 'Missing cost data - affects profit calculations'}
+          />
+        );
       }
     },
     { field: 'currentStock', headerName: 'Current Stock', width: 100 },
@@ -275,6 +325,7 @@ const Products = () => {
         ...product,
         sku: product.productCode || product.sku || '',
         physicalCount: product.physicalCount || '', // Populate physicalCount
+        cost: product.cost || '', // Populate cost field
       });
     } else {
       setEditingProduct(null);
@@ -283,6 +334,7 @@ const Products = () => {
         sku: '',
         category: '',
         price: '',
+        cost: '', // Include cost field in new product form
         currentStock: '',
         minimumStock: '',
         reorderPoint: '',
@@ -315,6 +367,15 @@ const Products = () => {
       return;
     }
 
+    // Warning for missing cost data
+    if (!formData.cost || formData.cost <= 0) {
+      setSnackbar({
+        open: true,
+        message: 'Warning: No cost data provided. This will affect gross profit calculations in reports.',
+        severity: 'warning'
+      });
+    }
+
     // Auto-generate product code if not provided
     let finalProductCode = formData.sku;
     if (!finalProductCode) {
@@ -343,6 +404,7 @@ const Products = () => {
       sku: finalProductCode,
       productCode: finalProductCode, // Add the Firebase field
       price: formData.price ? Number(formData.price) : 0,
+      cost: formData.cost ? Number(formData.cost) : 0, // Include cost field
       currentStock: formData.currentStock ? Number(formData.currentStock) : 0,
       physicalCount: formData.physicalCount ? Number(formData.physicalCount) : 0, // Include physicalCount
       reorderPoint: formData.reorderPoint ? Number(formData.reorderPoint) : 0,
@@ -419,6 +481,37 @@ const Products = () => {
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Cost Data Summary Alert */}
+      {!isFullscreen && (
+        <Alert
+          severity={productsMissingCost > 0 ? "warning" : "success"}
+          sx={{ mb: 2, flexShrink: 0 }}
+          action={productsMissingCost > 0 ? (
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => setSelectedCategory('missing-cost')}
+            >
+              View Missing
+            </Button>
+          ) : undefined}
+        >
+          <Typography variant="body2">
+            {productsMissingCost > 0 ? (
+              <>
+                <strong>{productsMissingCost}</strong> products are missing cost data.
+                This affects gross profit calculations in your reports.
+                Click "View Missing" to see which products need cost information.
+              </>
+            ) : (
+              <>
+                ✅ All products have cost data! Your gross profit calculations will be accurate.
+              </>
+            )}
+          </Typography>
+        </Alert>
+      )}
+
       {/* Compact Search and Filter Bar - Hidden in fullscreen */}
       {!isFullscreen && (
         <Box sx={{ display: 'flex', gap: 2, mb: 1, alignItems: 'center', flexShrink: 0 }}>
@@ -442,6 +535,9 @@ const Products = () => {
             >
               <MenuItem value="">
                 <em>All Categories</em>
+              </MenuItem>
+              <MenuItem value="missing-cost">
+                <em>Missing Cost Data</em>
               </MenuItem>
               {categories.map((category) => (
                 <MenuItem key={category.id} value={category.name}>
@@ -581,7 +677,22 @@ const Products = () => {
       </Box>
 
       {/* Add/Edit Product Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+        disableEnforceFocus={isFullscreen}
+        sx={{
+          '& .MuiDialog-paper': {
+            zIndex: isFullscreen ? 10001 : 'auto',
+            position: isFullscreen ? 'fixed' : 'absolute'
+          },
+          '& .MuiBackdrop-root': {
+            zIndex: isFullscreen ? 10000 : 'auto'
+          }
+        }}
+      >
         <DialogTitle>
           {editingProduct ? 'Edit Product' : 'Add New Product'}
         </DialogTitle>
@@ -628,7 +739,7 @@ const Products = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Price (₱)"
+                label="Selling Price (₱)"
                 type="number"
                 value={formData.price}
                 onChange={(e) => {
@@ -641,6 +752,26 @@ const Products = () => {
                 }}
                 margin="normal"
                 inputProps={{ min: 0, step: 0.01 }}
+                helperText="Price customers pay"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Cost Price (₱)"
+                type="number"
+                value={formData.cost}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || isNaN(value)) {
+                    handleInputChange('cost', '');
+                  } else {
+                    handleInputChange('cost', parseFloat(value));
+                  }
+                }}
+                margin="normal"
+                inputProps={{ min: 0, step: 0.01 }}
+                helperText="What you paid for the product"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
