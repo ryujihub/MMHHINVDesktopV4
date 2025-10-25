@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   Box,
   Button,
@@ -29,7 +29,8 @@ import {
   FileDownload as DownloadIcon,
   Search as SearchIcon,
   Fullscreen as FullscreenIcon,
-  FullscreenExit as FullscreenExitIcon
+  FullscreenExit as FullscreenExitIcon,
+  Image as ImageIcon
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useInventory } from '../contexts/InventoryContext.js';
@@ -67,9 +68,12 @@ const Products = () => {
     unit: '',
     description: '',
     location: '',
+    image: '',
     createdAt: null,
     lastUpdated: null
   });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   // Calculate variance between current stock and minimum stock (total stock)
   const calculateVariance = (currentStock, minimumStock) => {
@@ -144,6 +148,43 @@ const Products = () => {
 
   // DataGrid columns
   const columns = [
+    {
+      field: 'image',
+      headerName: 'Image',
+      width: 80,
+      sortable: false,
+      renderCell: (params) => {
+        const imageUrl = params.row.image;
+        return imageUrl ? (
+          <Tooltip title="View Image">
+            <img
+              src={imageUrl}
+              alt={params.row.name}
+              style={{
+                width: 40,
+                height: 40,
+                objectFit: 'cover',
+                borderRadius: 4,
+                cursor: 'pointer'
+              }}
+              onClick={() => window.open(imageUrl, '_blank')}
+            />
+          </Tooltip>
+        ) : (
+          <Box sx={{
+            width: 40,
+            height: 40,
+            backgroundColor: '#f5f5f5',
+            borderRadius: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <ImageIcon sx={{ color: '#9e9e9e', fontSize: 20 }} />
+          </Box>
+        );
+      }
+    },
     {
       field: 'sku',
       headerName: 'Product Code',
@@ -326,6 +367,7 @@ const Products = () => {
         sku: product.productCode || product.sku || '',
         physicalCount: product.physicalCount || '', // Populate physicalCount
         cost: product.cost || '', // Populate cost field
+        image: product.image || '', // Populate image field
       });
     } else {
       setEditingProduct(null);
@@ -342,8 +384,10 @@ const Products = () => {
         description: '',
         location: '',
         physicalCount: '',
+        image: '',
       });
     }
+    setSelectedFile(null); // Reset selected file
     setOpenDialog(true);
   };
 
@@ -356,7 +400,26 @@ const Products = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
+  const handleFileChange = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
+
+  const uploadImage = async (file) => {
+    // Convert image to base64 for storage in Firestore
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result;
+        resolve(base64String);
+      };
+      reader.onerror = () => {
+        reject(new Error('Failed to convert image to base64'));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleSubmit = async () => {
     // Validation
     if (!formData.name || !formData.category) {
       setSnackbar({
@@ -398,6 +461,21 @@ const Products = () => {
       }
     }
 
+    // Upload image if selected
+    let imageURL = formData.image;
+    if (selectedFile) {
+      try {
+        imageURL = await uploadImage(selectedFile);
+      } catch (error) {
+        setSnackbar({
+          open: true,
+          message: 'Error uploading image. Please try again.',
+          severity: 'error'
+        });
+        return;
+      }
+    }
+
     // Prepare data with proper type conversion and field mapping
     const productData = {
       ...formData,
@@ -408,7 +486,8 @@ const Products = () => {
       currentStock: formData.currentStock ? Number(formData.currentStock) : 0,
       physicalCount: formData.physicalCount ? Number(formData.physicalCount) : 0, // Include physicalCount
       reorderPoint: formData.reorderPoint ? Number(formData.reorderPoint) : 0,
-      minimumStock: formData.minimumStock ? Number(formData.minimumStock) : 0
+      minimumStock: formData.minimumStock ? Number(formData.minimumStock) : 0,
+      image: imageURL
     };
 
     try {
@@ -878,6 +957,56 @@ const Products = () => {
                 multiline
                 rows={3}
               />
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ mt: 2, mb: 1 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Product Image
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    style={{ display: 'none' }}
+                  />
+                  <Button
+                    variant="outlined"
+                    startIcon={<ImageIcon />}
+                    onClick={() => fileInputRef.current?.click()}
+                    sx={{ minWidth: 150 }}
+                  >
+                    Choose Image
+                  </Button>
+                  {selectedFile && (
+                    <Typography variant="body2" color="text.secondary">
+                      Selected: {selectedFile.name}
+                    </Typography>
+                  )}
+                  {formData.image && !selectedFile && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <img
+                        src={formData.image}
+                        alt="Current product"
+                        style={{
+                          width: 40,
+                          height: 40,
+                          objectFit: 'cover',
+                          borderRadius: 4,
+                          border: '1px solid #ddd'
+                        }}
+                      />
+                      <Typography variant="body2" color="text.secondary">
+                        Current image
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  Supported formats: JPG, PNG, GIF, WebP. Max size: 5MB
+                </Typography>
+              </Box>
             </Grid>
           </Grid>
         </DialogContent>
