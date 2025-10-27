@@ -41,7 +41,7 @@ async function createWindow() {
       allowRunningInsecureContent: false,
       experimentalFeatures: false
     },
-    icon: path.join(__dirname, 'icon.png'),
+    icon: path.join(__dirname, 'icon.ico'),
     titleBarStyle: 'default',
     show: false
   });

@@ -30,7 +30,8 @@ import {
   Search as SearchIcon,
   Fullscreen as FullscreenIcon,
   FullscreenExit as FullscreenExitIcon,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Check as CheckIcon
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useInventory } from '../contexts/InventoryContext.js';
@@ -74,6 +75,7 @@ const Products = () => {
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
+  const [showCostAlert, setShowCostAlert] = useState(true);
 
   // Calculate variance between current stock and minimum stock (total stock)
   const calculateVariance = (currentStock, minimumStock) => {
@@ -130,6 +132,26 @@ const Products = () => {
   }, [products, searchQuery, selectedCategory]);
 
   // Define handler functions first
+  const handleImageClick = (imageUrl) => {
+    if (imageUrl.startsWith('data:')) {
+      // Convert base64 to blob for safe navigation
+      const byteString = atob(imageUrl.split(',')[1]);
+      const mimeString = imageUrl.split(',')[0].split(':')[1].split(';')[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+      }
+      const blob = new Blob([ab], { type: mimeString });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+      // Clean up blob URL after 10 seconds
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+    } else {
+      window.open(imageUrl, '_blank');
+    }
+  };
+
   const handleEdit = (product) => {
     console.log('Editing product:', product);
     handleOpenDialog(product);
@@ -167,7 +189,7 @@ const Products = () => {
                 borderRadius: 4,
                 cursor: 'pointer'
               }}
-              onClick={() => window.open(imageUrl, '_blank')}
+              onClick={() => handleImageClick(imageUrl)}
             />
           </Tooltip>
         ) : (
@@ -561,10 +583,11 @@ const Products = () => {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Cost Data Summary Alert */}
-      {!isFullscreen && (
+      {!isFullscreen && showCostAlert && (
         <Alert
           severity={productsMissingCost > 0 ? "warning" : "success"}
           sx={{ mb: 2, flexShrink: 0 }}
+          onClose={() => setShowCostAlert(false)}
           action={productsMissingCost > 0 ? (
             <Button
               color="inherit"
@@ -573,7 +596,15 @@ const Products = () => {
             >
               View Missing
             </Button>
-          ) : undefined}
+          ) : (
+            <IconButton
+              size="small"
+              onClick={() => setShowCostAlert(false)}
+              sx={{ color: 'inherit' }}
+            >
+              <CheckIcon />
+            </IconButton>
+          )}
         >
           <Typography variant="body2">
             {productsMissingCost > 0 ? (
@@ -584,7 +615,7 @@ const Products = () => {
               </>
             ) : (
               <>
-                ✅ All products have cost data! Your gross profit calculations will be accurate.
+                All products have cost data! Your gross profit calculations will be accurate.
               </>
             )}
           </Typography>

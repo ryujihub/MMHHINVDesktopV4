@@ -1,5 +1,5 @@
 {
-  "name": "mmh-hardware-inventory",
+  "name": "metro-manila-hills-hardware-inventory",
   "version": "1.0.0",
   "description": "Metro Manila Hills Hardware Inventory Management System",
   "main": "build/electron.js",
@@ -28,7 +28,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "public/icon.ico",
+      "icon": "public/inventory-icon.ico",
       "signAndEditExecutable": false
     },
     "mac": {
