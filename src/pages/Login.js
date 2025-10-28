@@ -13,12 +13,12 @@ import {
 import {
   Visibility,
   VisibilityOff,
-  Store as StoreIcon,
   Lock as LockIcon,
   Security as SecurityIcon
 } from '@mui/icons-material';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { useAuth } from '../contexts/AuthContext.js';
+import mmhLogo from '../assets/mmh-logo.png';
 
 
 
@@ -115,19 +115,24 @@ const Login = () => {
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Box
               sx={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                backgroundColor: '#3b82f6',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                width: 120,
+                height: 120,
                 mx: 'auto',
                 mb: 2,
-                boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3)'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             >
-              <StoreIcon sx={{ fontSize: 40, color: 'white' }} />
+              <img 
+                src={mmhLogo} 
+                alt="Metro Manila Hills Hardware Logo"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain'
+                }}
+              />
             </Box>
             <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: '#1e293b', mb: 1 }}>
               Metro Manila Hills Hardware
