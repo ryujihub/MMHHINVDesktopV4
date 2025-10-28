@@ -41,7 +41,7 @@ async function createWindow() {
       allowRunningInsecureContent: false,
       experimentalFeatures: false
     },
-    icon: path.join(__dirname, 'icon.ico'),
+    icon: path.join(__dirname, 'mmh-logo.ico'),
     titleBarStyle: 'default',
     show: false
   });

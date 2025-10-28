@@ -28,7 +28,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "public/inventory-icon.ico",
+      "icon": "public/mmh-logo.ico",
       "signAndEditExecutable": false
     },
     "mac": {
