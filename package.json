@@ -2,7 +2,7 @@
   "name": "metro-manila-hills-hardware-inventory",
   "version": "1.0.0",
   "description": "Metro Manila Hills Hardware Inventory Management System",
-  "main": "build/electron.js",
+  "main": "public/electron.js",
   "homepage": "./",
   "scripts": {
     "start": "react-scripts start",
