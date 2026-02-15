@@ -17,6 +17,7 @@ import {
   Person as PersonIcon,
   Settings as SettingsIcon
 } from '@mui/icons-material';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { useAuth } from '../../contexts/AuthContext.js';
 import { useInventory } from '../../contexts/InventoryContext.js';
 
@@ -33,6 +34,11 @@ const Header = ({ onMenuClick }) => {
   const handleSettingsClick = () => {
     handleProfileMenuClose();
     navigate('/settings');
+  };
+
+  const handleGuideManualClick = () => {
+    handleProfileMenuClose();
+    navigate('/guide');
   };
 
   const handleProfileMenuOpen = (event) => {
@@ -108,6 +114,12 @@ const Header = ({ onMenuClick }) => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <PersonIcon fontSize="small" />
               <Typography variant="body2">Profile</Typography>
+            </Box>
+          </MenuItem>
+          <MenuItem onClick={handleGuideManualClick}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <MenuBookIcon fontSize="small" />
+              <Typography variant="body2">Guide Manual</Typography>
             </Box>
           </MenuItem>
           <MenuItem onClick={handleSettingsClick}>

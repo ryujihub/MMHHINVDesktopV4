@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Drawer,
   List,
@@ -10,7 +10,7 @@ import {
   Divider,
   Box,
   Typography,
-  Collapse
+  Tooltip
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -18,11 +18,11 @@ import {
   Category as CategoryIcon,
   Receipt as ReceiptIcon,
   Assessment as AssessmentIcon,
+  Inventory2 as InventoryReportIcon,
   Settings as SettingsIcon,
   Store as StoreIcon,
   People as PeopleIcon,
-  ExpandLess,
-  ExpandMore
+  MenuBook as MenuBookIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext.js';
@@ -33,54 +33,47 @@ const menuItems = [
   {
     title: 'Main',
     items: [
-      { text: 'Dashboard', icon: <DashboardIcon />, path: '/' }
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/', tooltip: 'Overview of inventory, low stock alerts, and quick actions' },
+      { text: 'Guide & Manual', icon: <MenuBookIcon />, path: '/guide', tooltip: 'User guide and documentation' }
     ]
   },
   {
     title: 'Inventory',
     items: [
-      { text: 'Products', icon: <InventoryIcon />, path: '/products' },
-      { text: 'Categories', icon: <CategoryIcon />, path: '/categories' }
+      { text: 'Products', icon: <InventoryIcon />, path: '/products', tooltip: 'Manage products, stock levels, and pricing' },
+      { text: 'Categories', icon: <CategoryIcon />, path: '/categories', tooltip: 'Organize products into categories' }
     ]
   },
   {
     title: 'Reports',
     items: [
-      { text: 'Reports & Analytics', icon: <AssessmentIcon />, path: '/reports', hasSubmenu: true, submenu: [
-        { text: 'Full Business Report', icon: <AssessmentIcon />, path: '/reports/comprehensive' }
-      ]}
+      { text: 'Reports Overview', icon: <AssessmentIcon />, path: '/reports', tooltip: 'View all reports and analytics' },
+      { text: 'Full Business Report', icon: <AssessmentIcon />, path: '/reports/comprehensive', tooltip: 'Complete business analysis and insights' },
+      { text: 'Sales Report', icon: <ReceiptIcon />, path: '/reports/sales', tooltip: 'Sales performance and revenue trends' },
+      { text: 'Inventory Report', icon: <InventoryReportIcon />, path: '/reports/inventory', tooltip: 'Stock levels and product performance' }
     ]
   },
   {
     title: 'Management',
     items: [
-      { text: 'User Management', icon: <PeopleIcon />, path: '/user-management' }
+      { text: 'User Management', icon: <PeopleIcon />, path: '/user-management', tooltip: 'Manage user accounts and roles' }
     ]
   },
   {
     title: 'System',
     items: [
-      { text: 'Settings', icon: <SettingsIcon />, path: '/settings' }
+      { text: 'Settings', icon: <SettingsIcon />, path: '/settings', tooltip: 'App settings and configuration' }
     ]
   }
 ];
 
-const Sidebar = ({ open, toggleSidebar }) => {
+const Sidebar = ({ open }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAdmin } = useAuth();
-  const [openSubmenus, setOpenSubmenus] = useState({});
 
   const handleNavigation = (path) => {
     navigate(path);
-  };
-
-  const toggleSubmenu = (sectionTitle, itemIndex) => {
-    const key = `${sectionTitle}-${itemIndex}`;
-    setOpenSubmenus(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
   };
 
   return (
@@ -246,116 +239,66 @@ const Sidebar = ({ open, toggleSidebar }) => {
               <List dense>
                 {section.items.map((item, itemIndex) => {
                   const isActive = location.pathname === item.path;
-                  const key = `${section.title}-${itemIndex}`;
-                  const isOpen = openSubmenus[key];
+                  const listButton = (
+                    <ListItemButton
+                      onClick={() => handleNavigation(item.path)}
+                      sx={{
+                        mx: 1,
+                        my: 0.2,
+                        borderRadius: 1.5,
+                        backgroundColor: isActive
+                          ? 'linear-gradient(135deg, #3b82f6, #1e40af)'
+                          : 'rgba(59, 130, 246, 0.05)',
+                        color: isActive ? 'white' : '#e2e8f0',
+                        transition: 'all 0.2s ease-in-out',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': isActive ? {
+                          content: '""',
+                          position: 'absolute',
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: '3px',
+                          background: 'linear-gradient(180deg, #60a5fa, #3b82f6)',
+                          borderRadius: '0 2px 2px 0'
+                        } : {},
+                        '&:hover': {
+                          backgroundColor: isActive
+                            ? 'linear-gradient(135deg, #2563eb, #1e40af)'
+                            : 'rgba(59, 130, 246, 0.15)',
+                          transform: 'translateX(2px)',
+                          '& .MuiListItemIcon-root': {
+                            color: isActive ? 'white' : '#60a5fa'
+                          }
+                        },
+                        '& .MuiListItemIcon-root': {
+                          color: isActive ? 'white' : '#94a3b8',
+                          transition: 'color 0.2s ease-in-out'
+                        }
+                      }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 35 }}>
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.text}
+                        primaryTypographyProps={{
+                          fontSize: '0.8rem',
+                          fontWeight: isActive ? 600 : 500,
+                          letterSpacing: '0.2px'
+                        }}
+                      />
+                    </ListItemButton>
+                  );
                   return (
-                    <React.Fragment key={itemIndex}>
-                      <ListItem disablePadding>
-                        <ListItemButton
-                          onClick={() => item.hasSubmenu ? toggleSubmenu(section.title, itemIndex) : handleNavigation(item.path)}
-                          sx={{
-                            mx: 1,
-                            my: 0.2,
-                            borderRadius: 1.5,
-                            backgroundColor: isActive
-                              ? 'linear-gradient(135deg, #3b82f6, #1e40af)'
-                              : 'rgba(59, 130, 246, 0.05)',
-                            color: isActive ? 'white' : '#e2e8f0',
-                            transition: 'all 0.2s ease-in-out',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            '&::before': isActive ? {
-                              content: '""',
-                              position: 'absolute',
-                              left: 0,
-                              top: 0,
-                              bottom: 0,
-                              width: '3px',
-                              background: 'linear-gradient(180deg, #60a5fa, #3b82f6)',
-                              borderRadius: '0 2px 2px 0'
-                            } : {},
-                            '&:hover': {
-                              backgroundColor: isActive
-                                ? 'linear-gradient(135deg, #2563eb, #1e40af)'
-                                : 'rgba(59, 130, 246, 0.15)',
-                              transform: 'translateX(2px)',
-                              '& .MuiListItemIcon-root': {
-                                color: isActive ? 'white' : '#60a5fa'
-                              }
-                            },
-                            '& .MuiListItemIcon-root': {
-                              color: isActive ? 'white' : '#94a3b8',
-                              transition: 'color 0.2s ease-in-out'
-                            }
-                          }}
-                        >
-                          <ListItemIcon sx={{ minWidth: 35 }}>
-                            {item.icon}
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={item.text}
-                            primaryTypographyProps={{
-                              fontSize: '0.8rem',
-                              fontWeight: isActive ? 600 : 500,
-                              letterSpacing: '0.2px'
-                            }}
-                          />
-                          {item.hasSubmenu && (isOpen ? <ExpandLess /> : <ExpandMore />)}
-                        </ListItemButton>
-                      </ListItem>
-                      {item.hasSubmenu && (
-                        <Collapse in={isOpen} timeout="auto" unmountOnExit>
-                          <List component="div" disablePadding dense>
-                            {item.submenu.map((subItem, subIndex) => {
-                              const subIsActive = location.pathname === subItem.path;
-                              return (
-                                <ListItem key={subIndex} disablePadding>
-                                  <ListItemButton
-                                    onClick={() => handleNavigation(subItem.path)}
-                                    sx={{
-                                      pl: 4,
-                                      mx: 1,
-                                      my: 0.1,
-                                      borderRadius: 1,
-                                      backgroundColor: subIsActive
-                                        ? 'linear-gradient(135deg, #3b82f6, #1e40af)'
-                                        : 'rgba(59, 130, 246, 0.05)',
-                                      color: subIsActive ? 'white' : '#e2e8f0',
-                                      transition: 'all 0.2s ease-in-out',
-                                      '&:hover': {
-                                        backgroundColor: subIsActive
-                                          ? 'linear-gradient(135deg, #2563eb, #1e40af)'
-                                          : 'rgba(59, 130, 246, 0.15)',
-                                        transform: 'translateX(2px)',
-                                        '& .MuiListItemIcon-root': {
-                                          color: subIsActive ? 'white' : '#60a5fa'
-                                        }
-                                      },
-                                      '& .MuiListItemIcon-root': {
-                                        color: subIsActive ? 'white' : '#94a3b8',
-                                        transition: 'color 0.2s ease-in-out'
-                                      }
-                                    }}
-                                  >
-                                    <ListItemIcon sx={{ minWidth: 30 }}>
-                                      {subItem.icon}
-                                    </ListItemIcon>
-                                    <ListItemText
-                                      primary={subItem.text}
-                                      primaryTypographyProps={{
-                                        fontSize: '0.75rem',
-                                        fontWeight: subIsActive ? 600 : 500,
-                                        letterSpacing: '0.2px'
-                                      }}
-                                    />
-                                  </ListItemButton>
-                                </ListItem>
-                              );
-                            })}
-                          </List>
-                        </Collapse>
-                      )}
-                    </React.Fragment>
+                    <ListItem key={itemIndex} disablePadding>
+                      <Tooltip title={item.tooltip || item.text} placement="right" arrow>
+                        <Box component="span" sx={{ width: '100%' }}>
+                          {listButton}
+                        </Box>
+                      </Tooltip>
+                    </ListItem>
                   );
                 })}
               </List>

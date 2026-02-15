@@ -17,6 +17,8 @@ import Reports from './pages/Reports.js';
 import SalesReport from './pages/SalesReport.js';
 import InventoryReport from './pages/InventoryReport.js';
 import ComprehensiveReport from './pages/ComprehensiveReport.js';
+import GuideManual from './pages/GuideManual.js';
+import QuickStartModal from './components/QuickStart/QuickStartModal.js';
 import Settings from './pages/Settings.js';
 import UserManagement from './pages/UserManagement.js';
 import Profile from './pages/Profile.js';
@@ -74,6 +76,8 @@ const AppContent = () => {
       <Sidebar open={true} />
       <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
         <Header />
+        {/* First-run quick start modal shown to authenticated users who haven't dismissed it */}
+        <QuickStartModal />
         <Box
           component="main"
           sx={{
@@ -88,6 +92,7 @@ const AppContent = () => {
         >
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/guide" element={<GuideManual />} />
             <Route path="/products" element={<Products />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/reports" element={<AdminRoute><Reports /></AdminRoute>} />

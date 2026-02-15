@@ -197,26 +197,48 @@ const Categories = () => {
         )}
       </Box>
 
-      {/* Categories DataGrid */}
+      {/* Categories DataGrid or Empty State */}
       <Card>
         <CardContent sx={{ p: 0 }}>
-          <DataGrid
-            rows={categories}
-            columns={columns}
-            pageSize={10}
-            rowsPerPageOptions={[10, 25, 50]}
-            disableSelectionOnClick
-            autoHeight
-            sx={{
-              '& .MuiDataGrid-cell': {
-                borderBottom: '1px solid #e5e7eb'
-              },
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: '#f8fafc',
-                borderBottom: '2px solid #e5e7eb'
-              }
-            }}
-          />
+          {categories.length === 0 ? (
+            <Box sx={{ p: 6, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <CategoryIcon sx={{ fontSize: 64, color: '#94a3b8' }} />
+              <Typography variant="h6" color="text.secondary">
+                No categories yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400 }}>
+                Get started by adding your first category. Categories help organize your products (e.g., Tools, Hardware, Electrical).
+              </Typography>
+              {hasPermission('edit') && (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => handleOpenDialog()}
+                  sx={{ mt: 1, backgroundColor: '#3b82f6', '&:hover': { backgroundColor: '#2563eb' } }}
+                >
+                  Add Category
+                </Button>
+              )}
+            </Box>
+          ) : (
+            <DataGrid
+              rows={categories}
+              columns={columns}
+              pageSize={10}
+              rowsPerPageOptions={[10, 25, 50]}
+              disableSelectionOnClick
+              autoHeight
+              sx={{
+                '& .MuiDataGrid-cell': {
+                  borderBottom: '1px solid #e5e7eb'
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: '#f8fafc',
+                  borderBottom: '2px solid #e5e7eb'
+                }
+              }}
+            />
+          )}
         </CardContent>
       </Card>
 

@@ -31,7 +31,8 @@ import {
   Fullscreen as FullscreenIcon,
   FullscreenExit as FullscreenExitIcon,
   Image as ImageIcon,
-  Check as CheckIcon
+  Check as CheckIcon,
+  Inventory as InventoryIcon
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useInventory } from '../contexts/InventoryContext.js';
@@ -742,10 +743,24 @@ const Products = () => {
             </Typography>
           </Box>
         ) : filteredProducts.length === 0 ? (
-          <Box sx={{ p: 4, textAlign: 'center', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              {searchQuery ? 'No products found matching your search.' : 'No products available. Add your first product to get started!'}
+          <Box sx={{ p: 4, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+            <InventoryIcon sx={{ fontSize: 64, color: '#94a3b8' }} />
+            <Typography variant="h6" color="text.secondary">
+              {searchQuery ? 'No products match your search' : 'No products yet'}
             </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {searchQuery ? 'Try a different search term or clear filters.' : 'Get started by adding your first product. You can add name, price, SKU, category, and stock levels.'}
+            </Typography>
+            {!searchQuery && hasPermission('edit') && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => handleOpenDialog()}
+                sx={{ mt: 1, backgroundColor: '#3b82f6', '&:hover': { backgroundColor: '#2563eb' } }}
+              >
+                Add Product
+              </Button>
+            )}
           </Box>
         ) : (
           <DataGrid
