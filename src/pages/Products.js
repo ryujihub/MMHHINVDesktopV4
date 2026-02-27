@@ -1,1085 +1,467 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Typography,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
-  Chip,
-  IconButton,
-  Tooltip,
-  Alert,
-  Snackbar
+  Box, Button, Typography, TextField, Dialog, DialogTitle,
+  DialogContent, DialogActions, FormControl, InputLabel, Select,
+  MenuItem, Grid, Chip, IconButton, Tooltip, Snackbar, Alert,
+  Collapse, Divider, Paper, InputAdornment,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  FileUpload as UploadIcon,
-  FileDownload as DownloadIcon,
   Search as SearchIcon,
-  Fullscreen as FullscreenIcon,
-  FullscreenExit as FullscreenExitIcon,
   Image as ImageIcon,
-  Check as CheckIcon,
-  Inventory as InventoryIcon
+  Inventory as InventoryIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  Checklist as ChecklistIcon,
+  Save as SaveIcon,
+  Close as CloseIcon,
+  ArrowDropDown as ArrowDropDownIcon,
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useInventory } from '../contexts/InventoryContext.js';
 import { useAuth } from '../contexts/AuthContext.js';
-import { useLocation } from 'react-router-dom';
 
-const Products = () => {
+/* ─────────────────────────────────────────────
+   Colour helpers
+───────────────────────────────────────────── */
+const BLUE = '#3b82f6';
+const AMBER = '#f59e0b';
+
+export default function Products() {
   const { products, categories, loading, addProduct, updateProduct, deleteProduct, updatePhysicalCount } = useInventory();
   const { hasPermission } = useAuth();
-  const location = useLocation();
-  
-  // Debug logging
-  console.log('Products loaded:', products);
-  console.log('Categories loaded:', categories);
 
-  console.log('Loading state:', loading);
-  
+  /* state */
   const [openDialog, setOpenDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(''); // New state for category filter
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [isFullscreen, setIsFullscreen] = useState(false); // New state for fullscreen mode
-  const [formData, setFormData] = useState({
-    name: '',
-    productCode: '',
-    category: '',
-    price: '',
-    cost: '', // Add cost field for purchase price
-    currentStock: '0',
-    minimumStock: '0',
-    physicalCount: '0', // Add physicalCount to initial state
-    variance: 0,
-    variancePercentage: 0,
-    unit: '',
-    description: '',
-    location: '',
-    image: '',
-    createdAt: null,
-    lastUpdated: null
-  });
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [auditMode, setAuditMode] = useState(false);
+  const [auditCounts, setAuditCounts] = useState({});
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [snack, setSnack] = useState({ open: false, msg: '', sev: 'success' });
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
-  const [showCostAlert, setShowCostAlert] = useState(true);
+  const auditRefs = useRef({});
 
-  // Calculate variance between current stock and minimum stock (total stock)
-  const calculateVariance = (currentStock, minimumStock) => {
-    const current = parseInt(currentStock) || 0;
-    const total = parseInt(minimumStock) || 0;
+  const [form, setForm] = useState({
+    name: '', sku: '', category: '', price: '', cost: '',
+    currentStock: '', minimumStock: '', reorderPoint: '',
+    unit: '', description: '', location: '', physicalCount: '', image: '',
+  });
 
-    // Calculate how many items are missing from total stock
-    const variance = current - total;
-    const variancePercentage = total === 0 ? 0 : (variance / total) * 100;
+  /* derived */
+  const missingCostCount = useMemo(() =>
+    products.filter(p => !p.cost || p.cost <= 0).length, [products]);
 
-    return {
-      variance,
-      variancePercentage,
-      status: variance === 0 ? 'MATCH' : variance > 0 ? 'EXCESS' : 'MISSING'
-    };
-  };
-
-  // Count products missing cost data
-  const productsMissingCost = useMemo(() => {
-    return products.filter(product => !product.cost || product.cost <= 0).length;
-  }, [products]);
-
-  // Filtered products based on search and category
-  const filteredProducts = useMemo(() => {
-    let currentProducts = products;
-
-    // Apply search query filter
+  const rows = useMemo(() => {
+    let list = products;
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      currentProducts = currentProducts.filter(product =>
-        (product.name && product.name.toLowerCase().includes(query)) ||
-        (product.sku && product.sku.toLowerCase().includes(query)) ||
-        (product.productCode && product.productCode.toLowerCase().includes(query)) ||
-        (product.category && product.category.toLowerCase().includes(query))
+      const q = searchQuery.toLowerCase();
+      list = list.filter(p =>
+        (p.name?.toLowerCase().includes(q)) ||
+        (p.productCode?.toLowerCase().includes(q)) ||
+        (p.category?.toLowerCase().includes(q))
       );
     }
+    if (categoryFilter === '_missing') list = list.filter(p => !p.cost || p.cost <= 0);
+    else if (categoryFilter) list = list.filter(p => p.category === categoryFilter);
+    return list;
+  }, [products, searchQuery, categoryFilter]);
 
-    // Apply category filter
-    if (selectedCategory) {
-      if (selectedCategory === 'missing-cost') {
-        // Filter products missing cost data
-        currentProducts = currentProducts.filter(product =>
-          !product.cost || product.cost <= 0
-        );
-      } else {
-        // Filter by regular category
-        currentProducts = currentProducts.filter(product =>
-          product.category === selectedCategory
-        );
+  /* ── Audit Mode ── */
+  const startAudit = () => {
+    const map = {};
+    products.forEach(p => { map[p.id] = p.physicalCount ?? p.currentStock ?? 0; });
+    setAuditCounts(map);
+    setAuditMode(true);
+  };
+  const cancelAudit = () => { setAuditMode(false); setAuditCounts({}); };
+  const saveAudit = async () => {
+    for (const [id, cnt] of Object.entries(auditCounts))
+      await updatePhysicalCount(id, parseInt(cnt) || 0);
+    setSnack({ open: true, msg: `✅ Counts saved for all ${rows.length} products!`, sev: 'success' });
+    cancelAudit();
+  };
+  const auditKey = (e, id) => {
+    if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      const ids = rows.map(r => r.id);
+      const next = ids[ids.indexOf(id) + 1];
+      if (next && auditRefs.current[next]) {
+        auditRefs.current[next].focus();
+        auditRefs.current[next].select();
       }
     }
+  };
 
-    return currentProducts;
-  }, [products, searchQuery, selectedCategory]);
+  /* ── Dialog helpers ── */
+  const openAdd = () => { setShowAdvanced(false); setEditingProduct(null); setSelectedFile(null); setForm({ name: '', sku: '', category: '', price: '', cost: '', currentStock: '', minimumStock: '', reorderPoint: '', unit: '', description: '', location: '', physicalCount: '', image: '' }); setOpenDialog(true); };
+  const openEdit = (prod) => { setShowAdvanced(false); setEditingProduct(prod); setSelectedFile(null); setForm({ ...prod, sku: prod.productCode || prod.sku || '', cost: prod.cost || '', physicalCount: prod.physicalCount || '', image: prod.image || '' }); setOpenDialog(true); };
+  const closeDialog = () => { setOpenDialog(false); setEditingProduct(null); };
+  const f = (key, val) => setForm(p => ({ ...p, [key]: val }));
 
-  // Define handler functions first
-  const handleImageClick = (imageUrl) => {
-    if (imageUrl.startsWith('data:')) {
-      // Convert base64 to blob for safe navigation
-      const byteString = atob(imageUrl.split(',')[1]);
-      const mimeString = imageUrl.split(',')[0].split(':')[1].split(';')[0];
-      const ab = new ArrayBuffer(byteString.length);
-      const ia = new Uint8Array(ab);
-      for (let i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
-      }
-      const blob = new Blob([ab], { type: mimeString });
-      const blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank');
-      // Clean up blob URL after 10 seconds
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-    } else {
-      window.open(imageUrl, '_blank');
+  const submit = async () => {
+    if (!form.name || !form.category) { setSnack({ open: true, msg: 'Product Name and Category are required.', sev: 'error' }); return; }
+    let code = form.sku || `${(form.category || '').substring(0, 2).toUpperCase()}${form.name.substring(0, 3).toUpperCase()}${Date.now().toString().slice(-6)}`;
+    let img = form.image;
+    if (selectedFile) {
+      img = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(selectedFile); }).catch(() => null);
+      if (!img) { setSnack({ open: true, msg: 'Image upload failed.', sev: 'error' }); return; }
     }
+    const data = { ...form, sku: code, productCode: code, image: img, price: Number(form.price) || 0, cost: Number(form.cost) || 0, currentStock: Number(form.currentStock) || 0, minimumStock: Number(form.minimumStock) || 0, reorderPoint: Number(form.reorderPoint) || 0, physicalCount: Number(form.physicalCount) || 0 };
+    try {
+      editingProduct ? updateProduct(editingProduct.id, data) : addProduct(data);
+      setSnack({ open: true, msg: editingProduct ? 'Product updated!' : 'Product added!', sev: 'success' });
+      closeDialog();
+    } catch { setSnack({ open: true, msg: 'Error saving product.', sev: 'error' }); }
   };
 
-  const handleEdit = (product) => {
-    console.log('Editing product:', product);
-    handleOpenDialog(product);
-  };
-
-  const handleDelete = (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      deleteProduct(productId);
-      setSnackbar({
-        open: true,
-        message: 'Product deleted successfully',
-        severity: 'success'
-      });
-    }
-  };
-
-  // DataGrid columns
+  /* ── Columns ── */
   const columns = [
     {
-      field: 'image',
-      headerName: 'Image',
-      width: 80,
-      sortable: false,
-      renderCell: (params) => {
-        const imageUrl = params.row.image;
-        return imageUrl ? (
-          <Tooltip title="View Image">
-            <img
-              src={imageUrl}
-              alt={params.row.name}
-              style={{
-                width: 40,
-                height: 40,
-                objectFit: 'cover',
-                borderRadius: 4,
-                cursor: 'pointer'
-              }}
-              onClick={() => handleImageClick(imageUrl)}
-            />
-          </Tooltip>
-        ) : (
-          <Box sx={{
-            width: 40,
-            height: 40,
-            backgroundColor: '#f5f5f5',
-            borderRadius: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <ImageIcon sx={{ color: '#9e9e9e', fontSize: 20 }} />
-          </Box>
-        );
-      }
+      field: 'image', headerName: '', width: 54, sortable: false,
+      renderCell: ({ row }) => row.image
+        ? <img src={row.image} alt="" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6, marginTop: 6, cursor: 'pointer' }} onClick={() => window.open(row.image, '_blank')} />
+        : <Box sx={{ width: 36, height: 36, bgcolor: '#f1f5f9', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', mt: '6px' }}><ImageIcon sx={{ color: '#cbd5e1', fontSize: 18 }} /></Box>
     },
     {
-      field: 'sku',
-      headerName: 'Product Code',
-      width: 100,
-      valueGetter: (params) => params.row.productCode || params.row.sku || ''
-    },
-    { field: 'name', headerName: 'Product Name', width: 200 },
-    { field: 'category', headerName: 'Category', width: 130 },
-
-    {
-      field: 'price',
-      headerName: 'Selling Price',
-      width: 100,
-      valueFormatter: (params) => {
-        if (params.value == null || params.value === undefined) return '₱0.00';
-        return `₱${Number(params.value).toFixed(2)}`;
-      }
-    },
-    {
-      field: 'cost',
-      headerName: 'Cost Price',
-      width: 100,
-      valueFormatter: (params) => {
-        if (params.value == null || params.value === undefined) return '₱0.00';
-        return `₱${Number(params.value).toFixed(2)}`;
-      }
-    },
-    {
-      field: 'costStatus',
-      headerName: 'Cost Status',
-      width: 100,
-      renderCell: (params) => {
-        const cost = params.row.cost || 0;
-        let color = 'default';
-        let label = 'Missing';
-
-        if (cost > 0) {
-          color = 'success';
-          label = 'Set';
-        } else {
-          color = 'warning';
-          label = 'Missing';
-        }
-
-        return (
-          <Chip
-            label={label}
-            color={color}
-            size="small"
-            title={cost > 0 ? 'Cost data available' : 'Missing cost data - affects profit calculations'}
-          />
-        );
-      }
-    },
-    { field: 'currentStock', headerName: 'Current Stock', width: 100 },
-    { field: 'minimumStock', headerName: 'Target Stock', width: 100 },
-    {
-      field: 'targetGap',
-      headerName: 'Target Gap',
-      width: 100,
-      renderCell: (params) => {
-        const targetGap = params.row.targetGap || 0;
-        let color = 'default';
-        let label = 'No Gap';
-
-        if (targetGap > 0) {
-          color = 'warning'; // Orange/Red if stock is below target
-          label = `Gap: ${targetGap}`;
-        } else if (targetGap <= 0) {
-          color = 'success'; // Green if stock meets/exceeds target
-          label = `OK`;
-        }
-
-        return (
-          <Tooltip title={`Target Stock: ${params.row.minimumStock || 0}, Current Stock: ${params.row.currentStock || 0}`}>
-            <Chip label={label} color={color} size="small" />
-          </Tooltip>
-        );
-      }
-    },
-    {
-      field: 'physicalCount',
-      headerName: 'Physical Count',
-      width: 120,
-      renderCell: (params) => (
-        <TextField
-          value={params.row.physicalCount || ''}
-          type="number"
-          size="small"
-          onChange={(e) => updatePhysicalCount(params.row.id, parseInt(e.target.value) || 0)}
-          inputProps={{ min: 0 }}
-        />
-      ),
-    },
-    {
-      field: 'inventoryVariance',
-      headerName: 'Inventory Variance',
-      width: 130,
-      renderCell: (params) => {
-        const inventoryVariance = params.row.inventoryVariance || 0;
-        let color = 'default';
-        let label = 'No Variance';
-
-        if (inventoryVariance < 0) {
-          color = 'error'; // Red if missing
-          label = `Missing: ${Math.abs(inventoryVariance)}`;
-        } else if (inventoryVariance > 0) {
-          color = 'success'; // Green if excess
-          label = `Excess: +${inventoryVariance}`;
-        } else {
-          color = 'default'; // Gray if no variance
-          label = 'No Variance';
-        }
-
-        return (
-          <Tooltip title={`Physical Count: ${params.row.physicalCount || 0}, Current Stock: ${params.row.currentStock || 0}`}>
-            <Chip label={label} color={color} size="small" />
-          </Tooltip>
-        );
-      }
-    },
-    { field: 'unit', headerName: 'Unit', width: 80 },
-    { 
-      field: 'status', 
-      headerName: 'Status', 
-      width: 100,
-      renderCell: (params) => {
-        const stock = params.row.currentStock || 0;
-        const reorderPoint = params.row.reorderPoint || 0;
-        let color = 'default';
-        let label = 'In Stock';
-        
-        if (stock === 0) {
-          color = 'error';
-          label = 'Out of Stock';
-        } else if (stock <= reorderPoint) {
-          color = 'warning';
-          label = 'Low Stock';
-        }
-        
-        return <Chip label={label} color={color} size="small" />;
-      }
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 120,
-      sortable: false,
-      renderCell: (params) => (
-    <Box sx={{ p: 2 }}>
-          {hasPermission('edit') && (
-            <IconButton
-              size="small"
-              onClick={() => handleEdit(params.row)}
-              color="primary"
-            >
-              <EditIcon />
-            </IconButton>
-          )}
-          {hasPermission('all') && (
-            <IconButton
-              size="small"
-              onClick={() => handleDelete(params.row.id)}
-              color="error"
-            >
-              <DeleteIcon />
-            </IconButton>
-          )}
+      field: 'name', headerName: 'Product', flex: 1, minWidth: 160,
+      renderCell: ({ row }) => (
+        <Box>
+          <Typography variant="body2" fontWeight={600} lineHeight={1.3}>{row.name}</Typography>
+          <Typography variant="caption" color="text.secondary">{row.productCode || row.sku || '—'}</Typography>
         </Box>
-      ),
-    }
+      )
+    },
+    {
+      field: 'category', headerName: 'Category', width: 110,
+      renderCell: ({ row }) => <Chip label={row.category || '—'} size="small" sx={{ bgcolor: '#e0f2fe', color: '#0369a1', fontWeight: 600, fontSize: '0.7rem' }} />
+    },
+    {
+      field: 'price', headerName: 'Price', width: 90,
+      renderCell: ({ row }) => <Typography variant="body2" fontWeight={600}>₱{Number(row.price || 0).toFixed(2)}</Typography>
+    },
+    {
+      field: 'cost', headerName: 'Cost', width: 90,
+      renderCell: ({ row }) => {
+        const c = row.cost || 0;
+        return <Typography variant="body2" sx={{ color: c > 0 ? 'inherit' : AMBER, fontWeight: c > 0 ? 400 : 700 }}>
+          {c > 0 ? `₱${c.toFixed(2)}` : 'Missing'}
+        </Typography>;
+      }
+    },
+    {
+      field: 'currentStock', headerName: 'Stock', width: 72, type: 'number', align: 'center', headerAlign: 'center',
+      renderCell: ({ row }) => {
+        const s = row.currentStock || 0;
+        const t = row.minimumStock || 0;
+        const color = s === 0 ? '#ef4444' : s < t ? AMBER : '#22c55e';
+        return <Typography variant="body2" sx={{ fontWeight: 700, color }}>{s}</Typography>;
+      }
+    },
+    {
+      field: 'minimumStock', headerName: 'Target', width: 70, type: 'number', align: 'center', headerAlign: 'center',
+      renderCell: ({ row }) => <Typography variant="body2" color="text.secondary">{row.minimumStock || 0}</Typography>
+    },
+    {
+      field: 'physicalCount', headerName: 'Counted', width: auditMode ? 130 : 85, align: 'center', headerAlign: 'center',
+      renderCell: ({ row }) => auditMode ? (
+        <TextField
+          inputRef={el => { if (el) auditRefs.current[row.id] = el; }}
+          value={auditCounts[row.id] ?? ''}
+          type="number" size="small"
+          onFocus={e => e.target.select()}
+          onChange={e => setAuditCounts(p => ({ ...p, [row.id]: e.target.value }))}
+          onKeyDown={e => auditKey(e, row.id)}
+          inputProps={{ min: 0, style: { textAlign: 'center', fontWeight: 700 } }}
+          sx={{ width: 100, '& .MuiOutlinedInput-root': { bgcolor: '#fefce8', '& fieldset': { borderColor: AMBER, borderWidth: 2 }, '&:focus-within fieldset': { borderColor: '#d97706' } } }}
+        />
+      ) : (
+        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+          {row.physicalCount ?? '—'}
+        </Typography>
+      )
+    },
+    {
+      field: 'inventoryVariance', headerName: 'Variance', width: 95,
+      renderCell: ({ row }) => {
+        const v = row.inventoryVariance || 0;
+        if (v === 0) return <Chip label="OK" size="small" sx={{ bgcolor: '#f0fdf4', color: '#15803d', fontWeight: 600, fontSize: '0.7rem' }} />;
+        return <Chip label={v < 0 ? `−${Math.abs(v)}` : `+${v}`} color={v < 0 ? 'error' : 'success'} size="small" sx={{ fontWeight: 600, fontSize: '0.7rem' }} />;
+      }
+    },
+    {
+      field: 'actions', headerName: '', width: 80, sortable: false,
+      renderCell: ({ row }) => (
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          {hasPermission('edit') && <Tooltip title="Edit"><IconButton size="small" onClick={() => openEdit(row)} sx={{ color: BLUE }}><EditIcon fontSize="small" /></IconButton></Tooltip>}
+          {hasPermission('all') && <Tooltip title="Delete"><IconButton size="small" onClick={() => { if (window.confirm('Delete this product?')) { deleteProduct(row.id); setSnack({ open: true, msg: 'Deleted.', sev: 'success' }); } }} sx={{ color: '#ef4444' }}><DeleteIcon fontSize="small" /></IconButton></Tooltip>}
+        </Box>
+      )
+    },
   ];
 
-  const handleOpenDialog = (product = null) => {
-    if (product) {
-      setEditingProduct(product);
-      // Map productCode to sku for the form if it exists
-      setFormData({
-        ...product,
-        sku: product.productCode || product.sku || '',
-        physicalCount: product.physicalCount || '', // Populate physicalCount
-        cost: product.cost || '', // Populate cost field
-        image: product.image || '', // Populate image field
-      });
-    } else {
-      setEditingProduct(null);
-      setFormData({
-        name: '',
-        sku: '',
-        category: '',
-        price: '',
-        cost: '', // Include cost field in new product form
-        currentStock: '',
-        minimumStock: '',
-        reorderPoint: '',
-        unit: '',
-        description: '',
-        location: '',
-        physicalCount: '',
-        image: '',
-      });
-    }
-    setSelectedFile(null); // Reset selected file
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setEditingProduct(null);
-  };
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
-  };
-
-  const uploadImage = async (file) => {
-    // Convert image to base64 for storage in Firestore
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64String = reader.result;
-        resolve(base64String);
-      };
-      reader.onerror = () => {
-        reject(new Error('Failed to convert image to base64'));
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleSubmit = async () => {
-    // Validation
-    if (!formData.name || !formData.category) {
-      setSnackbar({
-        open: true,
-        message: 'Please fill in all required fields (Name, Category)',
-        severity: 'error'
-      });
-      return;
-    }
-
-    // Warning for missing cost data
-    if (!formData.cost || formData.cost <= 0) {
-      setSnackbar({
-        open: true,
-        message: 'Warning: No cost data provided. This will affect gross profit calculations in reports.',
-        severity: 'warning'
-      });
-    }
-
-    // Auto-generate product code if not provided
-    let finalProductCode = formData.sku;
-    if (!finalProductCode) {
-      const timestamp = Date.now().toString().slice(-6);
-      const prefix = formData.name.substring(0, 3).toUpperCase();
-      const categoryPrefix = formData.category ? formData.category.substring(0, 2).toUpperCase() : '';
-      finalProductCode = `${categoryPrefix}${prefix}${timestamp}`;
-    }
-
-    // Check if product code already exists (for new products)
-    if (!editingProduct) {
-      const existingProduct = products.find(p => p.sku === finalProductCode);
-      if (existingProduct) {
-        setSnackbar({
-          open: true,
-          message: 'Product code already exists. Please use a different code.',
-          severity: 'error'
-        });
-        return;
-      }
-    }
-
-    // Upload image if selected
-    let imageURL = formData.image;
-    if (selectedFile) {
-      try {
-        imageURL = await uploadImage(selectedFile);
-      } catch (error) {
-        setSnackbar({
-          open: true,
-          message: 'Error uploading image. Please try again.',
-          severity: 'error'
-        });
-        return;
-      }
-    }
-
-    // Prepare data with proper type conversion and field mapping
-    const productData = {
-      ...formData,
-      sku: finalProductCode,
-      productCode: finalProductCode, // Add the Firebase field
-      price: formData.price ? Number(formData.price) : 0,
-      cost: formData.cost ? Number(formData.cost) : 0, // Include cost field
-      currentStock: formData.currentStock ? Number(formData.currentStock) : 0,
-      physicalCount: formData.physicalCount ? Number(formData.physicalCount) : 0, // Include physicalCount
-      reorderPoint: formData.reorderPoint ? Number(formData.reorderPoint) : 0,
-      minimumStock: formData.minimumStock ? Number(formData.minimumStock) : 0,
-      image: imageURL
-    };
-
-    try {
-      if (editingProduct) {
-        updateProduct(editingProduct.id, productData);
-        setSnackbar({
-          open: true,
-          message: 'Product updated successfully',
-          severity: 'success'
-        });
-      } else {
-        addProduct(productData);
-        setSnackbar({
-          open: true,
-          message: 'Product added successfully',
-          severity: 'success'
-        });
-      }
-      handleCloseDialog();
-    } catch (error) {
-      console.error('Error saving product:', error);
-      setSnackbar({
-        open: true,
-        message: 'An error occurred while saving the product',
-        severity: 'error'
-      });
-    }
-  };
-
-  const handleImport = () => {
-    setSnackbar({
-      open: true,
-      message: 'Import functionality is currently disabled.',
-      severity: 'info'
-    });
-  };
-
-  const handleExport = () => {
-    setSnackbar({
-      open: true,
-      message: 'Export functionality is currently disabled.',
-      severity: 'info'
-    });
-  };
-
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
-
-  // Handle escape key to exit fullscreen
+  /* ── ESC to cancel audit ── */
   useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape' && isFullscreen) {
-        setIsFullscreen(false);
-      }
-    };
+    const h = e => { if (e.key === 'Escape' && auditMode) cancelAudit(); };
+    document.addEventListener('keydown', h);
+    return () => document.removeEventListener('keydown', h);
+  }, [auditMode]);
 
-    if (isFullscreen) {
-      document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden'; // Prevent background scrolling
-    } else {
-      document.body.style.overflow = 'unset'; // Restore scrolling
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isFullscreen]);
-
+  /* ════════════════════════════════════════════
+     RENDER
+  ════════════════════════════════════════════ */
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Cost Data Summary Alert */}
-      {!isFullscreen && showCostAlert && (
-        <Alert
-          severity={productsMissingCost > 0 ? "warning" : "success"}
-          sx={{ mb: 2, flexShrink: 0 }}
-          onClose={() => setShowCostAlert(false)}
-          action={productsMissingCost > 0 ? (
-            <Button
-              color="inherit"
-              size="small"
-              onClick={() => setSelectedCategory('missing-cost')}
-            >
-              View Missing
-            </Button>
-          ) : (
-            <IconButton
-              size="small"
-              onClick={() => setShowCostAlert(false)}
-              sx={{ color: 'inherit' }}
-            >
-              <CheckIcon />
-            </IconButton>
-          )}
-        >
-          <Typography variant="body2">
-            {productsMissingCost > 0 ? (
-              <>
-                <strong>{productsMissingCost}</strong> products are missing cost data.
-                This affects gross profit calculations in your reports.
-                Click "View Missing" to see which products need cost information.
-              </>
-            ) : (
-              <>
-                All products have cost data! Your gross profit calculations will be accurate.
-              </>
-            )}
-          </Typography>
-        </Alert>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 1.5, pb: 1 }}>
+
+      {/* ── Audit Mode Banner ── */}
+      {auditMode && (
+        <Paper elevation={0} sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 2, border: `2px solid ${AMBER}`, borderRadius: 2, bgcolor: '#fffbeb', flexShrink: 0 }}>
+          <ChecklistIcon sx={{ color: AMBER }} />
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="subtitle2" fontWeight={700} color="#92400e">Audit Mode active</Typography>
+            <Typography variant="caption" color="#a16207">Type counts → press <strong>Enter</strong> to move to next row → <strong>Save Counts</strong> when done.</Typography>
+          </Box>
+          <Button variant="contained" color="warning" size="small" startIcon={<SaveIcon />} onClick={saveAudit} sx={{ fontWeight: 700, boxShadow: 'none', borderRadius: 2 }}>
+            Save Counts
+          </Button>
+          <IconButton size="small" onClick={cancelAudit} sx={{ color: '#92400e' }}><CloseIcon fontSize="small" /></IconButton>
+        </Paper>
       )}
 
-      {/* Compact Search and Filter Bar - Hidden in fullscreen */}
-      {!isFullscreen && (
-        <Box sx={{ display: 'flex', gap: 2, mb: 1, alignItems: 'center', flexShrink: 0 }}>
-          <TextField
-            variant="outlined"
+      {/* ── Toolbar ── */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+        {/* Search */}
+        <TextField
+          size="small"
+          placeholder="Search products…"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 18, color: '#94a3b8' }} /></InputAdornment> }}
+          sx={{ width: 210, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+        />
+
+        {/* Category */}
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <Select
+            value={categoryFilter}
+            onChange={e => setCategoryFilter(e.target.value)}
+            displayEmpty
+            sx={{ borderRadius: 2 }}
+            IconComponent={ArrowDropDownIcon}
+          >
+            <MenuItem value=""><Typography variant="body2" color="text.secondary">All categories</Typography></MenuItem>
+            {missingCostCount > 0 && <MenuItem value="_missing"><Typography variant="body2" color="warning.main">⚠ Missing Cost ({missingCostCount})</Typography></MenuItem>}
+            {categories.map(c => <MenuItem key={c.id} value={c.name}><Typography variant="body2">{c.name}</Typography></MenuItem>)}
+          </Select>
+        </FormControl>
+
+        <Box sx={{ flex: 1 }} />
+
+        {/* Audit Mode */}
+        <Tooltip title="Quickly update all physical counts at once">
+          <Button
+            variant={auditMode ? 'contained' : 'outlined'}
+            color="warning"
             size="small"
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-            }}
-            sx={{ minWidth: 250 }}
-          />
-          <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
-            <InputLabel>Filter by Category</InputLabel>
-            <Select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              label="Filter by Category"
-            >
-              <MenuItem value="">
-                <em>All Categories</em>
-              </MenuItem>
-              <MenuItem value="missing-cost">
-                <em>Missing Cost Data</em>
-              </MenuItem>
-              {categories.map((category) => (
-                <MenuItem key={category.id} value={category.name}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          {hasPermission('edit') && (
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={() => handleOpenDialog()}
-              sx={{
-                backgroundColor: '#3b82f6',
-                '&:hover': {
-                  backgroundColor: '#2563eb'
-                }
-              }}
-            >
-              Add Product
-            </Button>
-          )}
-          <Tooltip title={isFullscreen ? "Exit Fullscreen" : "Fullscreen Table"}>
-            <IconButton
-              onClick={toggleFullscreen}
-              sx={{
-                color: isFullscreen ? '#f59e0b' : '#6b7280',
-                '&:hover': {
-                  backgroundColor: isFullscreen ? '#fef3c7' : '#f3f4f6',
-                }
-              }}
-            >
-              {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
-            </IconButton>
-          </Tooltip>
-        </Box>
-      )}
+            startIcon={<ChecklistIcon />}
+            onClick={auditMode ? cancelAudit : startAudit}
+            sx={{ borderRadius: 2, fontWeight: 600, boxShadow: 'none' }}
+          >
+            {auditMode ? 'Exit Audit' : 'Audit Mode'}
+          </Button>
+        </Tooltip>
 
-      {/* Fullscreen Mode Header */}
-      {isFullscreen && (
-        <Box sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          p: 2,
-          backgroundColor: '#f8f9fa',
-          borderBottom: '1px solid #e0e0e0',
-          flexShrink: 0
-        }}>
-          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-            Products Inventory - Fullscreen View
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              {filteredProducts.length} products • Press ESC to exit fullscreen
-            </Typography>
-            <Tooltip title="Exit Fullscreen">
-              <IconButton
-                onClick={toggleFullscreen}
-                sx={{
-                  color: '#f59e0b',
-                  '&:hover': {
-                    backgroundColor: '#fef3c7',
-                  }
-                }}
-              >
-                <FullscreenExitIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Box>
-      )}
+        {/* Add */}
+        {hasPermission('edit') && (
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={openAdd}
+            sx={{ bgcolor: BLUE, '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2, fontWeight: 600, boxShadow: 'none' }}
+          >
+            Add Product
+          </Button>
+        )}
+      </Box>
 
-      {/* Fullscreen DataGrid */}
-      <Box sx={{
-        flexGrow: 1,
-        minHeight: 0,
-        position: isFullscreen ? 'fixed' : 'static',
-        top: isFullscreen ? 0 : 'auto',
-        left: isFullscreen ? 0 : 'auto',
-        right: isFullscreen ? 0 : 'auto',
-        bottom: isFullscreen ? 0 : 'auto',
-        zIndex: isFullscreen ? 9999 : 'auto',
-        backgroundColor: 'white'
-      }}>
+      {/* ── Count label ── */}
+      <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0, ml: 0.5 }}>
+        {rows.length} {rows.length === 1 ? 'product' : 'products'}{searchQuery ? ` matching "${searchQuery}"` : ''}
+      </Typography>
+
+      {/* ── DataGrid ── */}
+      <Box sx={{ flexGrow: 1, minHeight: 0 }}>
         {loading ? (
-          <Box sx={{ p: 4, textAlign: 'center', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              Loading products...
-            </Typography>
+          <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography color="text.secondary">Loading…</Typography>
           </Box>
-        ) : filteredProducts.length === 0 ? (
-          <Box sx={{ p: 4, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-            <InventoryIcon sx={{ fontSize: 64, color: '#94a3b8' }} />
-            <Typography variant="h6" color="text.secondary">
-              {searchQuery ? 'No products match your search' : 'No products yet'}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {searchQuery ? 'Try a different search term or clear filters.' : 'Get started by adding your first product. You can add name, price, SKU, category, and stock levels.'}
-            </Typography>
+        ) : rows.length === 0 ? (
+          <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+            <InventoryIcon sx={{ fontSize: 52, color: '#cbd5e1' }} />
+            <Typography variant="h6" color="text.secondary">{searchQuery ? 'No results' : 'No products yet'}</Typography>
             {!searchQuery && hasPermission('edit') && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => handleOpenDialog()}
-                sx={{ mt: 1, backgroundColor: '#3b82f6', '&:hover': { backgroundColor: '#2563eb' } }}
-              >
-                Add Product
+              <Button variant="contained" startIcon={<AddIcon />} onClick={openAdd}
+                sx={{ bgcolor: BLUE, '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2, boxShadow: 'none' }}>
+                Add First Product
               </Button>
             )}
           </Box>
         ) : (
           <DataGrid
-            rows={filteredProducts}
+            rows={rows}
             columns={columns}
-            pageSize={25}
+            pageSize={100}
             rowsPerPageOptions={[25, 50, 100]}
             disableSelectionOnClick
+            rowHeight={52}
             sx={{
               height: '100%',
-              '& .MuiDataGrid-root': {
-                border: 'none',
-              },
-              '& .MuiDataGrid-cell': {
-                borderBottom: '1px solid #e0e0e0',
-                padding: '12px 16px',
-              },
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: '#f5f5f5',
-                borderBottom: '2px solid #e0e0e0',
-              },
-              '& .MuiDataGrid-columnHeaderTitle': {
-                fontWeight: 'bold',
-              },
-              '& .MuiDataGrid-row': {
-                '&:nth-of-type(odd)': {
-                  backgroundColor: '#fafafa',
-                },
-                '&:hover': {
-                  backgroundColor: '#e3f2fd',
-                },
-              },
-              '& .MuiDataGrid-footerContainer': {
-                borderTop: '1px solid #e0e0e0',
-              },
+              border: '1px solid #e2e8f0',
+              borderRadius: 2,
+              '& .MuiDataGrid-columnHeaders': { bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' },
+              '& .MuiDataGrid-columnHeaderTitle': { fontWeight: 700, fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.4px' },
+              '& .MuiDataGrid-cell': { borderBottom: '1px solid #f1f5f9' },
+              '& .MuiDataGrid-row:hover': { bgcolor: '#f0f9ff' },
+              '& .MuiDataGrid-row:nth-of-type(even)': { bgcolor: '#fafbfc' },
+              '& .MuiDataGrid-footerContainer': { borderTop: '1px solid #e2e8f0', bgcolor: '#f8fafc' },
+              '& .MuiDataGrid-selectedRowCount': { display: 'none' },
             }}
           />
         )}
       </Box>
 
-      {/* Add/Edit Product Dialog */}
-      <Dialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        maxWidth="md"
-        fullWidth
-        disableEnforceFocus={isFullscreen}
-        sx={{
-          '& .MuiDialog-paper': {
-            zIndex: isFullscreen ? 10001 : 'auto',
-            position: isFullscreen ? 'fixed' : 'absolute'
-          },
-          '& .MuiBackdrop-root': {
-            zIndex: isFullscreen ? 10000 : 'auto'
-          }
-        }}
-      >
-        <DialogTitle>
-          {editingProduct ? 'Edit Product' : 'Add New Product'}
+      {/* ══════════════════════════════════════════
+          Add / Edit Dialog  (clean, minimal)
+      ══════════════════════════════════════════ */}
+      <Dialog open={openDialog} onClose={closeDialog} maxWidth="sm" fullWidth
+        PaperProps={{ sx: { borderRadius: 3, boxShadow: '0 20px 60px rgba(0,0,0,0.15)' } }}>
+
+        <DialogTitle sx={{ pb: 0, pt: 2.5, px: 3 }}>
+          <Typography variant="h6" fontWeight={700}>
+            {editingProduct ? 'Edit Product' : 'New Product'}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {editingProduct ? 'Update the product details below.' : 'Fill in the basics — the rest is optional.'}
+          </Typography>
         </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Product Name *"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                margin="normal"
-                required
-              />
+
+        <Divider sx={{ mt: 1.5 }} />
+
+        <DialogContent sx={{ px: 3, pt: 2.5 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField fullWidth label="Product Name *" value={form.name}
+                onChange={e => f('name', e.target.value)} autoFocus size="small"
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
             </Grid>
+
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Product Code"
-                value={formData.sku}
-                onChange={(e) => handleInputChange('sku', e.target.value)}
-                margin="normal"
-                placeholder="e.g., HAM001, SCR002 (auto-generated if empty)"
-                helperText="Leave empty to auto-generate a unique product code"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal" required>
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={formData.category}
-                  onChange={(e) => handleInputChange('category', e.target.value)}
-                  label="Category"
-                >
-                  {categories.map((category) => (
-                    <MenuItem key={category.id} value={category.name}>
-                      {category.name}
-                    </MenuItem>
-                  ))}
+              <FormControl fullWidth size="small">
+                <InputLabel>Category *</InputLabel>
+                <Select value={form.category} onChange={e => f('category', e.target.value)} label="Category *" sx={{ borderRadius: 2 }}>
+                  {categories.map(c => <MenuItem key={c.id} value={c.name}>{c.name}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Selling Price (₱)"
-                type="number"
-                value={formData.price}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || isNaN(value)) {
-                    handleInputChange('price', '');
-                  } else {
-                    handleInputChange('price', parseFloat(value));
-                  }
-                }}
-                margin="normal"
-                inputProps={{ min: 0, step: 0.01 }}
-                helperText="Price customers pay"
-              />
+            <Grid item xs={6} sm={3}>
+              <TextField fullWidth label="Selling Price ₱" type="number" value={form.price} size="small"
+                onChange={e => f('price', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                inputProps={{ min: 0, step: 0.01 }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Cost Price (₱)"
-                type="number"
-                value={formData.cost}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || isNaN(value)) {
-                    handleInputChange('cost', '');
-                  } else {
-                    handleInputChange('cost', parseFloat(value));
-                  }
-                }}
-                margin="normal"
-                inputProps={{ min: 0, step: 0.01 }}
-                helperText="What you paid for the product"
-              />
+
+            <Grid item xs={6} sm={3}>
+              <TextField fullWidth label="Cost ₱" type="number" value={form.cost} size="small"
+                onChange={e => f('cost', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                inputProps={{ min: 0, step: 0.01 }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Current Stock"
-                type="number"
-                value={formData.currentStock}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || isNaN(value)) {
-                    handleInputChange('currentStock', '');
-                  } else {
-                    handleInputChange('currentStock', parseInt(value));
-                  }
-                }}
-                margin="normal"
-                inputProps={{ min: 0 }}
-              />
+
+            <Grid item xs={6}>
+              <TextField fullWidth label="Current Stock" type="number" value={form.currentStock} size="small"
+                onChange={e => f('currentStock', e.target.value === '' ? '' : parseInt(e.target.value))}
+                inputProps={{ min: 0 }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Physical Count"
-                type="number"
-                value={formData.physicalCount}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || isNaN(value)) {
-                    handleInputChange('physicalCount', '');
-                  } else {
-                    handleInputChange('physicalCount', parseInt(value));
-                  }
-                }}
-                margin="normal"
-                inputProps={{ min: 0 }}
-                helperText="The actual physical count of stock during an audit"
-              />
+
+            <Grid item xs={6}>
+              <TextField fullWidth label="Target Stock" type="number" value={form.minimumStock} size="small"
+                onChange={e => f('minimumStock', e.target.value === '' ? '' : parseInt(e.target.value))}
+                inputProps={{ min: 0 }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Reorder Point"
-                type="number"
-                value={formData.reorderPoint}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || isNaN(value)) {
-                    handleInputChange('reorderPoint', '');
-                  } else {
-                    handleInputChange('reorderPoint', parseInt(value));
-                  }
-                }}
-                margin="normal"
-                inputProps={{ min: 0 }}
-              />
-            </Grid>
-    <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Target Stock"
-                type="number"
-                value={formData.minimumStock} // Using minimumStock as Target Stock
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || isNaN(value)) {
-                    handleInputChange('minimumStock', '');
-                  } else {
-                    handleInputChange('minimumStock', parseInt(value));
-                  }
-                }}
-                margin="normal"
-                inputProps={{ min: 0 }}
-                helperText="The target stock level for reorder purposes"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Unit"
-                value={formData.unit}
-                onChange={(e) => handleInputChange('unit', e.target.value)}
-                margin="normal"
-                placeholder="e.g., piece, set, kg"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Location"
-                value={formData.location}
-                onChange={(e) => handleInputChange('location', e.target.value)}
-                margin="normal"
-                placeholder="e.g., A1-B2"
-              />
-            </Grid>
+
+            {/* ── Advanced section ── */}
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                margin="normal"
-                multiline
-                rows={3}
-              />
+              <Button size="small" onClick={() => setShowAdvanced(!showAdvanced)}
+                endIcon={showAdvanced ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                sx={{ color: 'text.secondary', textTransform: 'none', fontSize: '0.78rem', p: 0 }}>
+                {showAdvanced ? 'Hide advanced fields' : 'More fields (code, unit, location, image…)'}
+              </Button>
             </Grid>
-            <Grid item xs={12}>
-              <Box sx={{ mt: 2, mb: 1 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Product Image
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    style={{ display: 'none' }}
-                  />
-                  <Button
-                    variant="outlined"
-                    startIcon={<ImageIcon />}
-                    onClick={() => fileInputRef.current?.click()}
-                    sx={{ minWidth: 150 }}
-                  >
-                    Choose Image
-                  </Button>
-                  {selectedFile && (
-                    <Typography variant="body2" color="text.secondary">
-                      Selected: {selectedFile.name}
-                    </Typography>
-                  )}
-                  {formData.image && !selectedFile && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <img
-                        src={formData.image}
-                        alt="Current product"
-                        style={{
-                          width: 40,
-                          height: 40,
-                          objectFit: 'cover',
-                          borderRadius: 4,
-                          border: '1px solid #ddd'
-                        }}
-                      />
-                      <Typography variant="body2" color="text.secondary">
-                        Current image
-                      </Typography>
+
+            <Grid item xs={12} sx={{ pt: '0!important' }}>
+              <Collapse in={showAdvanced}>
+                <Grid container spacing={2} sx={{ pt: 1 }}>
+                  <Grid item xs={6}>
+                    <TextField fullWidth label="Product Code" value={form.sku} size="small" placeholder="Auto-generated"
+                      onChange={e => f('sku', e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField fullWidth label="Reorder Point" type="number" value={form.reorderPoint} size="small"
+                      onChange={e => f('reorderPoint', e.target.value === '' ? '' : parseInt(e.target.value))}
+                      inputProps={{ min: 0 }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField fullWidth label="Unit" value={form.unit} size="small" placeholder="e.g. piece, kg"
+                      onChange={e => f('unit', e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField fullWidth label="Location" value={form.location} size="small" placeholder="e.g. A1-B2"
+                      onChange={e => f('location', e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField fullWidth label="Description" value={form.description} size="small" multiline rows={2}
+                      onChange={e => f('description', e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <input ref={fileInputRef} type="file" accept="image/*" onChange={e => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
+                      <Button variant="outlined" size="small" startIcon={<ImageIcon />} onClick={() => fileInputRef.current?.click()}
+                        sx={{ borderRadius: 2, textTransform: 'none' }}>
+                        Choose Image
+                      </Button>
+                      {selectedFile && <Typography variant="caption">📎 {selectedFile.name}</Typography>}
+                      {form.image && !selectedFile && (
+                        <img src={form.image} alt="" style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 4, border: '1px solid #e2e8f0' }} />
+                      )}
                     </Box>
-                  )}
-                </Box>
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                  Supported formats: JPG, PNG, GIF, WebP. Max size: 5MB
-                </Typography>
-              </Box>
+                  </Grid>
+                </Grid>
+              </Collapse>
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" sx={{ backgroundColor: '#3b82f6' }}>
-            {editingProduct ? 'Update' : 'Add'} Product
+
+        <Divider />
+
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+          <Button onClick={closeDialog} sx={{ borderRadius: 2, textTransform: 'none' }}>Cancel</Button>
+          <Button onClick={submit} variant="contained"
+            sx={{ bgcolor: BLUE, '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2, fontWeight: 700, boxShadow: 'none', textTransform: 'none', px: 3 }}>
+            {editingProduct ? 'Save Changes' : 'Add Product'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
+      {/* Snackbar */}
+      <Snackbar open={snack.open} autoHideDuration={4000} onClose={() => setSnack(s => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert severity={snack.sev} onClose={() => setSnack(s => ({ ...s, open: false }))} sx={{ borderRadius: 2, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
+          {snack.msg}
         </Alert>
       </Snackbar>
     </Box>
   );
-};
-
-export default Products;
+}

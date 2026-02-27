@@ -566,136 +566,42 @@ const ComprehensiveReport = () => {
   return (
     <Box sx={{ backgroundColor: '#f8fafc', minHeight: '100vh', p: 3 }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h3" component="h1" sx={{
-          fontWeight: 700,
-          color: '#1e293b',
-          mb: 1,
-          background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-          backgroundClip: 'text',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
-        }}>
-          <BusinessIcon sx={{ mr: 2, verticalAlign: 'bottom' }} />
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h5" fontWeight={700} sx={
+          { background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }
+        }>
           Comprehensive Business Report
         </Typography>
-        <Typography variant="subtitle1" sx={{ color: '#64748b', fontSize: '1.1rem' }}>
-          Complete inventory and sales analysis with business insights and performance metrics
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          Complete inventory and sales analysis with business insights
         </Typography>
-        <Divider sx={{ mt: 2, borderColor: '#e2e8f0' }} />
       </Box>
 
-      {/* Filters */}
-      <Paper elevation={0} sx={{
-        p: 3,
-        mb: 4,
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-        border: '1px solid #e2e8f0',
-        borderRadius: 2
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <FilterListIcon sx={{ color: '#8b5cf6', mr: 1 }} />
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
-            Report Filters & Controls
-          </Typography>
+      {/* ── Single-row Filter Bar ── */}
+      <Paper elevation={0} sx={{ p: 1.5, mb: 3, border: '1px solid #e2e8f0', borderRadius: 3 }}>
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+          <FormControl size="small" sx={{ minWidth: 130 }}>
+            <InputLabel>Period</InputLabel>
+            <Select value={datePreset} label="Period" onChange={(e) => handleDatePreset(e.target.value)} sx={{ borderRadius: 2 }}>
+              <MenuItem value="today">Today</MenuItem>
+              <MenuItem value="yesterday">Yesterday</MenuItem>
+              <MenuItem value="last7days">Last 7 Days</MenuItem>
+              <MenuItem value="last30days">Last 30 Days</MenuItem>
+              <MenuItem value="last90days">Last 90 Days</MenuItem>
+              <MenuItem value="thisMonth">This Month</MenuItem>
+              <MenuItem value="lastMonth">Last Month</MenuItem>
+            </Select>
+          </FormControl>
+          <DatePicker label="From" value={startDate} onChange={(d) => d && setStartDate(d)}
+            slotProps={{ textField: { size: 'small', sx: { width: 145 } } }} />
+          <DatePicker label="To" value={endDate} onChange={(d) => d && setEndDate(d)}
+            slotProps={{ textField: { size: 'small', sx: { width: 145 } } }} />
+          <Box sx={{ flex: 1 }} />
+          <Button size="small" variant="outlined" startIcon={<PdfIcon />} onClick={exportToPDF}
+            sx={{ borderColor: '#8b5cf6', color: '#8b5cf6', '&:hover': { bgcolor: '#faf5ff' }, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}>
+            Export PDF
+          </Button>
         </Box>
-
-        {/* Date Presets */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ color: '#64748b', mb: 1 }}>
-            Quick Date Ranges
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {[
-              { label: 'Today', value: 'today' },
-              { label: 'Yesterday', value: 'yesterday' },
-              { label: 'Last 7 Days', value: 'last7days' },
-              { label: 'Last 30 Days', value: 'last30days' },
-              { label: 'Last 90 Days', value: 'last90days' },
-              { label: 'This Month', value: 'thisMonth' },
-              { label: 'Last Month', value: 'lastMonth' }
-            ].map((preset) => (
-              <Chip
-                key={preset.value}
-                label={preset.label}
-                onClick={() => handleDatePreset(preset.value)}
-                variant={datePreset === preset.value ? 'filled' : 'outlined'}
-                sx={{
-                  cursor: 'pointer',
-                  backgroundColor: datePreset === preset.value ? '#8b5cf6' : 'transparent',
-                  color: datePreset === preset.value ? 'white' : '#64748b',
-                  borderColor: '#cbd5e1',
-                  '&:hover': {
-                    backgroundColor: datePreset === preset.value ? '#7c3aed' : '#f8fafc',
-                    borderColor: '#8b5cf6'
-                  }
-                }}
-              />
-            ))}
-          </Box>
-        </Box>
-
-        <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={3}>
-            <DatePicker
-              label="Start Date"
-              value={startDate}
-              onChange={(d) => d && setStartDate(d)}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  sx: {
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#ffffff',
-                      '&:hover fieldset': {
-                        borderColor: '#8b5cf6',
-                      },
-                    }
-                  }
-                }
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <DatePicker
-              label="End Date"
-              value={endDate}
-              onChange={(d) => d && setEndDate(d)}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  sx: {
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#ffffff',
-                      '&:hover fieldset': {
-                        borderColor: '#8b5cf6',
-                      },
-                    }
-                  }
-                }
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-              <Button
-                variant="outlined"
-                startIcon={<PdfIcon />}
-                onClick={exportToPDF}
-                sx={{
-                  borderColor: '#ef4444',
-                  color: '#ef4444',
-                  '&:hover': {
-                    borderColor: '#dc2626',
-                    backgroundColor: '#fef2f2'
-                  }
-                }}
-              >
-                PDF
-              </Button>
-            </Box>
-          </Grid>
-        </Grid>
       </Paper>
 
       {/* KPI Cards */}
@@ -1006,9 +912,9 @@ const ComprehensiveReport = () => {
                           {revenueByCategory.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={
                               index === 0 ? '#8b5cf6' :
-                              index === 1 ? '#10b981' :
-                              index === 2 ? '#3b82f6' :
-                              index === 3 ? '#f59e0b' : '#ef4444'
+                                index === 1 ? '#10b981' :
+                                  index === 2 ? '#3b82f6' :
+                                    index === 3 ? '#f59e0b' : '#ef4444'
                             } />
                           ))}
                         </Pie>
@@ -1060,9 +966,9 @@ const ComprehensiveReport = () => {
                           {revenueByPayment.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={
                               index === 0 ? '#3b82f6' :
-                              index === 1 ? '#10b981' :
-                              index === 2 ? '#f59e0b' :
-                              index === 3 ? '#ef4444' : '#8b5cf6'
+                                index === 1 ? '#10b981' :
+                                  index === 2 ? '#f59e0b' :
+                                    index === 3 ? '#ef4444' : '#8b5cf6'
                             } />
                           ))}
                         </Pie>

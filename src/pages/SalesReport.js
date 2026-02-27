@@ -278,201 +278,46 @@ const SalesReport = () => {
         <Divider sx={{ mt: 2, borderColor: '#e2e8f0' }} />
       </Box>
 
-      {/* Filters */}
-      <Paper elevation={0} sx={{
-        p: 3,
-        mb: 4,
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-        border: '1px solid #e2e8f0',
-        borderRadius: 2
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <FilterListIcon sx={{ color: '#3b82f6', mr: 1 }} />
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
-            Report Filters & Controls
-          </Typography>
+      {/* ── Single-row Filter Bar ── */}
+      <Paper elevation={0} sx={{ p: 1.5, mb: 3, border: '1px solid #e2e8f0', borderRadius: 3 }}>
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+          <FormControl size="small" sx={{ minWidth: 130 }}>
+            <InputLabel>Period</InputLabel>
+            <Select value={datePreset} label="Period" onChange={(e) => handleDatePreset(e.target.value)} sx={{ borderRadius: 2 }}>
+              <MenuItem value="today">Today</MenuItem>
+              <MenuItem value="yesterday">Yesterday</MenuItem>
+              <MenuItem value="last7days">Last 7 Days</MenuItem>
+              <MenuItem value="last30days">Last 30 Days</MenuItem>
+              <MenuItem value="last90days">Last 90 Days</MenuItem>
+              <MenuItem value="thisMonth">This Month</MenuItem>
+              <MenuItem value="lastMonth">Last Month</MenuItem>
+            </Select>
+          </FormControl>
+          <DatePicker label="From" value={startDate} onChange={(d) => d && setStartDate(d)}
+            slotProps={{ textField: { size: 'small', sx: { width: 145 } } }} />
+          <DatePicker label="To" value={endDate} onChange={(d) => d && setEndDate(d)}
+            slotProps={{ textField: { size: 'small', sx: { width: 145 } } }} />
+          <FormControl size="small" sx={{ minWidth: 130 }}>
+            <InputLabel>Payment</InputLabel>
+            <Select value={paymentFilter} label="Payment" onChange={(e) => setPaymentFilter(e.target.value)} sx={{ borderRadius: 2 }}>
+              <MenuItem value="all">All Methods</MenuItem>
+              <MenuItem value="cash">Cash</MenuItem>
+              <MenuItem value="card">Card</MenuItem>
+              <MenuItem value="gcash">GCash</MenuItem>
+              <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
+            </Select>
+          </FormControl>
+          <TextField size="small" placeholder="Search customers…" value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{ startAdornment: <SearchIcon sx={{ fontSize: 16, color: '#94a3b8', mr: 0.5 }} /> }}
+            sx={{ width: 170, '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
+          <Box sx={{ flex: 1 }} />
+          <Button size="small" onClick={resetFilters} sx={{ color: '#64748b', textTransform: 'none', borderRadius: 2 }}>Reset</Button>
+          <Button size="small" variant="contained" onClick={exportOrders} startIcon={<DownloadIcon />}
+            sx={{ bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' }, borderRadius: 2, boxShadow: 'none', textTransform: 'none', fontWeight: 600 }}>
+            Export CSV
+          </Button>
         </Box>
-
-        {/* Date Presets */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ color: '#64748b', mb: 1 }}>
-            Quick Date Ranges
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {[
-              { label: 'Today', value: 'today' },
-              { label: 'Yesterday', value: 'yesterday' },
-              { label: 'Last 7 Days', value: 'last7days' },
-              { label: 'Last 30 Days', value: 'last30days' },
-              { label: 'Last 90 Days', value: 'last90days' },
-              { label: 'This Month', value: 'thisMonth' },
-              { label: 'Last Month', value: 'lastMonth' }
-            ].map((preset) => (
-              <Chip
-                key={preset.value}
-                label={preset.label}
-                onClick={() => handleDatePreset(preset.value)}
-                variant={datePreset === preset.value ? 'filled' : 'outlined'}
-                sx={{
-                  cursor: 'pointer',
-                  backgroundColor: datePreset === preset.value ? '#3b82f6' : 'transparent',
-                  color: datePreset === preset.value ? 'white' : '#64748b',
-                  borderColor: '#cbd5e1',
-                  '&:hover': {
-                    backgroundColor: datePreset === preset.value ? '#2563eb' : '#f8fafc',
-                    borderColor: '#3b82f6'
-                  }
-                }}
-              />
-            ))}
-          </Box>
-        </Box>
-
-        <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={2}>
-            <DatePicker
-              label="Start Date"
-              value={startDate}
-              onChange={(d) => d && setStartDate(d)}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  sx: {
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#ffffff',
-                      '&:hover fieldset': {
-                        borderColor: '#3b82f6',
-                      },
-                    }
-                  }
-                }
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <DatePicker
-              label="End Date"
-              value={endDate}
-              onChange={(d) => d && setEndDate(d)}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  sx: {
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#ffffff',
-                      '&:hover fieldset': {
-                        borderColor: '#3b82f6',
-                      },
-                    }
-                  }
-                }
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Payment Method</InputLabel>
-              <Select
-                value={paymentFilter}
-                label="Payment Method"
-                onChange={(e) => setPaymentFilter(e.target.value)}
-                sx={{
-                  backgroundColor: '#ffffff',
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#3b82f6',
-                  }
-                }}
-              >
-                <MenuItem value="all">All Methods</MenuItem>
-                <MenuItem value="cash">Cash</MenuItem>
-                <MenuItem value="card">Card</MenuItem>
-                <MenuItem value="gcash">GCash</MenuItem>
-                <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth
-              label="Search Customers"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Type customer name..."
-              InputProps={{
-                startAdornment: <SearchIcon sx={{ color: '#64748b', mr: 1 }} />,
-              }}
-              sx={{
-                backgroundColor: '#ffffff',
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: '#3b82f6',
-                  },
-                }
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-              <Button
-                variant="outlined"
-                onClick={resetFilters}
-                sx={{
-                  borderColor: '#cbd5e1',
-                  color: '#64748b',
-                  '&:hover': {
-                    borderColor: '#3b82f6',
-                    backgroundColor: '#f8fafc'
-                  }
-                }}
-              >
-                Reset
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<PrintIcon />}
-                sx={{
-                  borderColor: '#10b981',
-                  color: '#10b981',
-                  '&:hover': {
-                    borderColor: '#059669',
-                    backgroundColor: '#f0fdf4'
-                  }
-                }}
-              >
-                Print
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<PdfIcon />}
-                sx={{
-                  borderColor: '#ef4444',
-                  color: '#ef4444',
-                  '&:hover': {
-                    borderColor: '#dc2626',
-                    backgroundColor: '#fef2f2'
-                  }
-                }}
-              >
-                PDF
-              </Button>
-              <Button
-                variant="contained"
-                onClick={exportOrders}
-                startIcon={<ExcelIcon />}
-                sx={{
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                    boxShadow: '0 6px 16px rgba(16, 185, 129, 0.4)'
-                  }
-                }}
-              >
-                Export Excel
-              </Button>
-            </Box>
-          </Grid>
-        </Grid>
       </Paper>
 
       {/* KPI Cards */}
@@ -592,12 +437,12 @@ const SalesReport = () => {
                 <AreaChart data={salesOverTime}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -679,9 +524,9 @@ const SalesReport = () => {
                     {revenueByPayment.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={
                         index === 0 ? '#3b82f6' :
-                        index === 1 ? '#10b981' :
-                        index === 2 ? '#f59e0b' :
-                        index === 3 ? '#ef4444' : '#8b5cf6'
+                          index === 1 ? '#10b981' :
+                            index === 2 ? '#f59e0b' :
+                              index === 3 ? '#ef4444' : '#8b5cf6'
                       } />
                     ))}
                   </Pie>

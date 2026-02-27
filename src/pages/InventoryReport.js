@@ -286,116 +286,39 @@ const InventoryReport = () => {
         <Divider sx={{ mt: 2, borderColor: '#e2e8f0' }} />
       </Box>
 
-      {/* Filters */}
-      <Paper elevation={0} sx={{
-        p: 3,
-        mb: 4,
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-        border: '1px solid #e2e8f0',
-        borderRadius: 2
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <FilterListIcon sx={{ color: '#10b981', mr: 1 }} />
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
-            Report Filters
-          </Typography>
+      {/* ── Compact Filter Bar ── */}
+      <Paper elevation={0} sx={{ p: 2, mb: 3, border: '1px solid #e2e8f0', borderRadius: 3 }}>
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+          <DatePicker
+            label="From"
+            value={startDate}
+            onChange={(d) => d && setStartDate(d)}
+            slotProps={{ textField: { size: 'small', sx: { width: 150 } } }}
+          />
+          <DatePicker
+            label="To"
+            value={endDate}
+            onChange={(d) => d && setEndDate(d)}
+            slotProps={{ textField: { size: 'small', sx: { width: 150 } } }}
+          />
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Category</InputLabel>
+            <Select value={categoryFilter} label="Category" onChange={(e) => setCategoryFilter(e.target.value)} sx={{ borderRadius: 2 }}>
+              <MenuItem value="all">All Categories</MenuItem>
+              {Array.from(new Set(products.map(p => p.category))).map(cat => (
+                <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Box sx={{ flex: 1 }} />
+          <Button size="small" onClick={resetFilters} sx={{ color: '#64748b', textTransform: 'none', borderRadius: 2 }}>Reset</Button>
+          <Button
+            size="small" variant="contained" onClick={exportInventory} startIcon={<DownloadIcon />}
+            sx={{ bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' }, borderRadius: 2, boxShadow: 'none', textTransform: 'none', fontWeight: 600 }}
+          >
+            Export CSV
+          </Button>
         </Box>
-        <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={3}>
-            <DatePicker
-              label="Start Date"
-              value={startDate}
-              onChange={(d) => d && setStartDate(d)}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  sx: {
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#ffffff',
-                      '&:hover fieldset': {
-                        borderColor: '#10b981',
-                      },
-                    }
-                  }
-                }
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <DatePicker
-              label="End Date"
-              value={endDate}
-              onChange={(d) => d && setEndDate(d)}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  sx: {
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#ffffff',
-                      '&:hover fieldset': {
-                        borderColor: '#10b981',
-                      },
-                    }
-                  }
-                }
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>Product Category</InputLabel>
-              <Select
-                value={categoryFilter}
-                label="Product Category"
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                sx={{
-                  backgroundColor: '#ffffff',
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#10b981',
-                  }
-                }}
-              >
-                <MenuItem value="all">All Categories</MenuItem>
-                {Array.from(new Set(products.map(p => p.category))).map(cat => (
-                  <MenuItem key={cat} value={cat}>{cat}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-              <Button
-                variant="outlined"
-                onClick={resetFilters}
-                sx={{
-                  borderColor: '#cbd5e1',
-                  color: '#64748b',
-                  '&:hover': {
-                    borderColor: '#10b981',
-                    backgroundColor: '#f8fafc'
-                  }
-                }}
-              >
-                Reset Filters
-              </Button>
-              <Button
-                variant="contained"
-                onClick={exportInventory}
-                startIcon={<DownloadIcon />}
-                sx={{
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                    boxShadow: '0 6px 16px rgba(16, 185, 129, 0.4)'
-                  }
-                }}
-              >
-                Export Report
-              </Button>
-            </Box>
-          </Grid>
-        </Grid>
       </Paper>
 
       {/* KPI Cards */}

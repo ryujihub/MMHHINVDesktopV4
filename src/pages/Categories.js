@@ -1,297 +1,220 @@
 import React, { useState } from 'react';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Typography,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
-  Tooltip,
-  Alert,
-  Snackbar,
-  Chip
+  Box, Button, Typography, TextField, Dialog, DialogTitle,
+  DialogContent, DialogActions, IconButton, Tooltip,
+  Snackbar, Alert, Divider, Paper, Grid, Chip,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Category as CategoryIcon,
 } from '@mui/icons-material';
-import { DataGrid } from '@mui/x-data-grid';
 import { useInventory } from '../contexts/InventoryContext.js';
 import { useAuth } from '../contexts/AuthContext.js';
 
-const Categories = () => {
+const BLUE = '#3b82f6';
+
+// A gentle palette for category cards
+const CARD_COLORS = [
+  { bg: '#eff6ff', border: '#bfdbfe', text: '#1d4ed8' },
+  { bg: '#f0fdf4', border: '#bbf7d0', text: '#15803d' },
+  { bg: '#fef9c3', border: '#fde68a', text: '#b45309' },
+  { bg: '#fdf4ff', border: '#e9d5ff', text: '#7e22ce' },
+  { bg: '#fff1f2', border: '#fecdd3', text: '#be123c' },
+  { bg: '#f0fdfa', border: '#99f6e4', text: '#0f766e' },
+];
+
+export default function Categories() {
   const { categories, products, addCategory, updateCategory, deleteCategory } = useInventory();
   const { hasPermission } = useAuth();
-  
+
   const [openDialog, setOpenDialog] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [form, setForm] = useState({ name: '', description: '' });
+  const [snack, setSnack] = useState({ open: false, msg: '', sev: 'success' });
 
-  const [formData, setFormData] = useState({
-    name: '',
-    description: ''
-  });
+  const productCountOf = (name) => products.filter(p => p.category === name).length;
 
-  // DataGrid columns
-  const columns = [
-    { field: 'name', headerName: 'Category Name', width: 200 },
-    { field: 'description', headerName: 'Description', width: 300 },
-    { 
-      field: 'productCount', 
-      headerName: 'Products', 
-      width: 120,
-      valueGetter: (params) => {
-        return products.filter(p => p.category === params.row.name).length;
-      }
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 120,
-      sortable: false,
-      renderCell: (params) => (
-        <Box>
-          {hasPermission('edit') && (
-            <Tooltip title="Edit">
-              <IconButton
-                size="small"
-                onClick={() => handleEdit(params.row)}
-                color="primary"
-              >
-                <EditIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          {hasPermission('all') && (
-            <Tooltip title="Delete">
-              <IconButton
-                size="small"
-                onClick={() => handleDelete(params.row.id)}
-                color="error"
-                disabled={products.some(p => p.category === params.row.name)}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-      )
-    }
-  ];
+  /* ── Dialog ── */
+  const openAdd = () => { setEditingCategory(null); setForm({ name: '', description: '' }); setOpenDialog(true); };
+  const openEdit = (cat) => { setEditingCategory(cat); setForm({ name: cat.name, description: cat.description || '' }); setOpenDialog(true); };
+  const close = () => { setOpenDialog(false); setEditingCategory(null); };
 
-  const handleOpenDialog = (category = null) => {
-    if (category) {
-      setEditingCategory(category);
-      setFormData(category);
-    } else {
-      setEditingCategory(null);
-      setFormData({ name: '', description: '' });
-    }
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setEditingCategory(null);
-  };
-
-  const handleEdit = (category) => {
-    handleOpenDialog(category);
-  };
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = () => {
-    if (!formData.name.trim()) {
-      setSnackbar({
-        open: true,
-        message: 'Category name is required',
-        severity: 'error'
-      });
-      return;
-    }
-
+  const submit = () => {
+    if (!form.name.trim()) { setSnack({ open: true, msg: 'Category name is required.', sev: 'error' }); return; }
     try {
       if (editingCategory) {
-        updateCategory(editingCategory.id, formData);
-        setSnackbar({
-          open: true,
-          message: 'Category updated successfully',
-          severity: 'success'
-        });
+        updateCategory(editingCategory.id, form);
+        setSnack({ open: true, msg: 'Category updated!', sev: 'success' });
       } else {
-        addCategory(formData);
-        setSnackbar({
-          open: true,
-          message: 'Category added successfully',
-          severity: 'success'
-        });
+        addCategory(form);
+        setSnack({ open: true, msg: 'Category added!', sev: 'success' });
       }
-      handleCloseDialog();
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: 'An error occurred',
-        severity: 'error'
-      });
+      close();
+    } catch { setSnack({ open: true, msg: 'Error saving category.', sev: 'error' }); }
+  };
+
+  const handleDelete = (cat) => {
+    const count = productCountOf(cat.name);
+    if (count > 0) { setSnack({ open: true, msg: `Cannot delete — ${count} product(s) still use this category.`, sev: 'warning' }); return; }
+    if (window.confirm(`Delete category "${cat.name}"?`)) {
+      deleteCategory(cat.id);
+      setSnack({ open: true, msg: 'Category deleted.', sev: 'success' });
     }
   };
 
-  const handleDelete = (categoryId) => {
-    const category = categories.find(c => c.id === categoryId);
-    const productCount = products.filter(p => p.category === category.name).length;
-    
-    if (productCount > 0) {
-      setSnackbar({
-        open: true,
-        message: `Cannot delete category with ${productCount} products. Please reassign products first.`,
-        severity: 'warning'
-      });
-      return;
-    }
-
-    if (window.confirm('Are you sure you want to delete this category?')) {
-      deleteCategory(categoryId);
-      setSnackbar({
-        open: true,
-        message: 'Category deleted successfully',
-        severity: 'success'
-      });
-    }
-  };
-
+  /* ═══════════════════════ RENDER ═══════════════════════ */
   return (
     <Box>
-      {/* Page Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
         <Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 1, color: '#3b82f6' }}>
-            Categories
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Organize your products into logical categories for better inventory management
+          <Typography variant="h5" fontWeight={700} color={BLUE}>Categories</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {categories.length} {categories.length === 1 ? 'category' : 'categories'} total
           </Typography>
         </Box>
         {hasPermission('edit') && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog()}
-            sx={{ 
-              backgroundColor: '#3b82f6',
-              '&:hover': {
-                backgroundColor: '#2563eb'
-              }
-            }}
-          >
+          <Button variant="contained" startIcon={<AddIcon />} onClick={openAdd}
+            sx={{ bgcolor: BLUE, '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2, boxShadow: 'none', fontWeight: 600, textTransform: 'none' }}>
             Add Category
           </Button>
         )}
       </Box>
 
-      {/* Categories DataGrid or Empty State */}
-      <Card>
-        <CardContent sx={{ p: 0 }}>
-          {categories.length === 0 ? (
-            <Box sx={{ p: 6, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-              <CategoryIcon sx={{ fontSize: 64, color: '#94a3b8' }} />
-              <Typography variant="h6" color="text.secondary">
-                No categories yet
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400 }}>
-                Get started by adding your first category. Categories help organize your products (e.g., Tools, Hardware, Electrical).
-              </Typography>
-              {hasPermission('edit') && (
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => handleOpenDialog()}
-                  sx={{ mt: 1, backgroundColor: '#3b82f6', '&:hover': { backgroundColor: '#2563eb' } }}
-                >
-                  Add Category
-                </Button>
-              )}
-            </Box>
-          ) : (
-            <DataGrid
-              rows={categories}
-              columns={columns}
-              pageSize={10}
-              rowsPerPageOptions={[10, 25, 50]}
-              disableSelectionOnClick
-              autoHeight
-              sx={{
-                '& .MuiDataGrid-cell': {
-                  borderBottom: '1px solid #e5e7eb'
-                },
-                '& .MuiDataGrid-columnHeaders': {
-                  backgroundColor: '#f8fafc',
-                  borderBottom: '2px solid #e5e7eb'
-                }
-              }}
-            />
+      {/* Empty state */}
+      {categories.length === 0 ? (
+        <Box sx={{ py: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+          <CategoryIcon sx={{ fontSize: 56, color: '#cbd5e1' }} />
+          <Typography variant="h6" color="text.secondary">No categories yet</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, textAlign: 'center' }}>
+            Categories help organise your products. Add your first one to get started.
+          </Typography>
+          {hasPermission('edit') && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={openAdd}
+              sx={{ mt: 1, bgcolor: BLUE, '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2, boxShadow: 'none', textTransform: 'none' }}>
+              Add Category
+            </Button>
           )}
-        </CardContent>
-      </Card>
+        </Box>
+      ) : (
+        /* Category Cards */
+        <Grid container spacing={2}>
+          {categories.map((cat, idx) => {
+            const color = CARD_COLORS[idx % CARD_COLORS.length];
+            const count = productCountOf(cat.name);
+            const canDelete = count === 0;
+            return (
+              <Grid item xs={12} sm={6} md={4} key={cat.id}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3,
+                    border: `1.5px solid ${color.border}`,
+                    bgcolor: color.bg,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1,
+                    transition: 'box-shadow 0.2s',
+                    '&:hover': { boxShadow: '0 4px 16px rgba(0,0,0,0.08)' },
+                  }}
+                >
+                  {/* Top row */}
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="subtitle1" fontWeight={700} sx={{ color: color.text, lineHeight: 1.3 }}>
+                        {cat.name}
+                      </Typography>
+                      {cat.description && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.3 }}>
+                          {cat.description}
+                        </Typography>
+                      )}
+                    </Box>
 
-      {/* Add/Edit Category Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {editingCategory ? 'Edit Category' : 'Add New Category'}
+                    {/* Actions */}
+                    <Box sx={{ display: 'flex', gap: 0.5, ml: 1, flexShrink: 0 }}>
+                      {hasPermission('edit') && (
+                        <Tooltip title="Edit">
+                          <IconButton size="small" onClick={() => openEdit(cat)}
+                            sx={{ color: color.text, '&:hover': { bgcolor: 'rgba(0,0,0,0.06)' } }}>
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {hasPermission('all') && (
+                        <Tooltip title={canDelete ? 'Delete' : `Can't delete — has ${count} products`}>
+                          <span>
+                            <IconButton size="small" onClick={() => handleDelete(cat)} disabled={!canDelete}
+                              sx={{ color: canDelete ? '#ef4444' : '#cbd5e1', '&:hover': { bgcolor: 'rgba(239,68,68,0.08)' } }}>
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      )}
+                    </Box>
+                  </Box>
+
+                  {/* Product count chip */}
+                  <Box>
+                    <Chip
+                      label={count === 0 ? 'No products' : `${count} product${count !== 1 ? 's' : ''}`}
+                      size="small"
+                      sx={{
+                        bgcolor: count > 0 ? color.text : 'transparent',
+                        color: count > 0 ? '#fff' : color.text,
+                        border: `1px solid ${color.border}`,
+                        fontWeight: 600,
+                        fontSize: '0.7rem',
+                      }}
+                    />
+                  </Box>
+                </Paper>
+              </Grid>
+            );
+          })}
+        </Grid>
+      )}
+
+      {/* Dialog */}
+      <Dialog open={openDialog} onClose={close} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { borderRadius: 3, boxShadow: '0 20px 60px rgba(0,0,0,0.12)' } }}>
+        <DialogTitle sx={{ pb: 0.5 }}>
+          <Typography variant="h6" fontWeight={700}>{editingCategory ? 'Edit Category' : 'New Category'}</Typography>
         </DialogTitle>
-        <DialogContent>
+        <Divider sx={{ mt: 1 }} />
+        <DialogContent sx={{ pt: 2.5, pb: 1 }}>
           <TextField
-            fullWidth
-            label="Category Name *"
-            value={formData.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
-            margin="normal"
-            required
-            placeholder="e.g., Tools, Hardware, Electrical"
+            fullWidth autoFocus label="Category Name *" value={form.name} size="small"
+            onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+            placeholder="e.g. Tools, Electrical, Hardware"
+            sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
           />
           <TextField
-            fullWidth
-            label="Description"
-            value={formData.description}
-            onChange={(e) => handleInputChange('description', e.target.value)}
-            margin="normal"
-            multiline
-            rows={3}
-            placeholder="Describe what products belong in this category"
+            fullWidth label="Description (optional)" value={form.description} size="small" multiline rows={2}
+            onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+            placeholder="What products belong here?"
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" sx={{ backgroundColor: '#3b82f6' }}>
-            {editingCategory ? 'Update' : 'Add'} Category
+        <Divider sx={{ mt: 1 }} />
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+          <Button onClick={close} sx={{ borderRadius: 2, textTransform: 'none' }}>Cancel</Button>
+          <Button onClick={submit} variant="contained"
+            sx={{ bgcolor: BLUE, '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2, boxShadow: 'none', fontWeight: 700, textTransform: 'none', px: 3 }}>
+            {editingCategory ? 'Save Changes' : 'Add Category'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
+      {/* Snackbar */}
+      <Snackbar open={snack.open} autoHideDuration={4000} onClose={() => setSnack(s => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert severity={snack.sev} onClose={() => setSnack(s => ({ ...s, open: false }))} sx={{ borderRadius: 2 }}>
+          {snack.msg}
         </Alert>
       </Snackbar>
     </Box>
   );
-};
-
-export default Categories;
+}
