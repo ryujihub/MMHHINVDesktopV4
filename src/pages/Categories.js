@@ -41,26 +41,34 @@ export default function Categories() {
   const openEdit = (cat) => { setEditingCategory(cat); setForm({ name: cat.name, description: cat.description || '' }); setOpenDialog(true); };
   const close = () => { setOpenDialog(false); setEditingCategory(null); };
 
-  const submit = () => {
+  const submit = async () => {
     if (!form.name.trim()) { setSnack({ open: true, msg: 'Category name is required.', sev: 'error' }); return; }
     try {
       if (editingCategory) {
-        updateCategory(editingCategory.id, form);
+        await updateCategory(editingCategory.id, form);
         setSnack({ open: true, msg: 'Category updated!', sev: 'success' });
       } else {
-        addCategory(form);
+        await addCategory(form);
         setSnack({ open: true, msg: 'Category added!', sev: 'success' });
       }
       close();
-    } catch { setSnack({ open: true, msg: 'Error saving category.', sev: 'error' }); }
+    } catch (error) {
+      console.error('Error saving category:', error);
+      setSnack({ open: true, msg: 'Error saving category.', sev: 'error' });
+    }
   };
 
-  const handleDelete = (cat) => {
+  const handleDelete = async (cat) => {
     const count = productCountOf(cat.name);
     if (count > 0) { setSnack({ open: true, msg: `Cannot delete — ${count} product(s) still use this category.`, sev: 'warning' }); return; }
     if (window.confirm(`Delete category "${cat.name}"?`)) {
-      deleteCategory(cat.id);
-      setSnack({ open: true, msg: 'Category deleted.', sev: 'success' });
+      try {
+        await deleteCategory(cat.id);
+        setSnack({ open: true, msg: 'Category deleted.', sev: 'success' });
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        setSnack({ open: true, msg: 'Failed to delete category.', sev: 'error' });
+      }
     }
   };
 

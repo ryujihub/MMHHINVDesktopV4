@@ -137,7 +137,7 @@ Recommended pattern
 
 Firestore structure (high-level)
 - collections:
-	- `products` — documents with fields: name, sku/code, currentStock, cost, price, category, reorderPoint, images, etc.
+	- `inventory` — documents with fields: name, sku/code, currentStock, cost, price, category, reorderPoint, images, etc.
 	- `orders` — documents with fields: date, items[], total, customer, paymentMethod, status, orderNumber, etc.
 	- `users` — user profiles and role (admin/staff)
 	- `settings` — app-wide settings (reorder points, default tax)

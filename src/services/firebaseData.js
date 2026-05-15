@@ -91,12 +91,12 @@ async add(productData) {
     },
 
     // Search products
-    async search(query) {
+    async search(searchQuery) {
       try {
         const q = query(
           collection(db, 'inventory'),
-          where('name', '>=', query),
-          where('name', '<=', query + '\uf8ff')
+          where('name', '>=', searchQuery),
+          where('name', '<=', searchQuery + '\uf8ff')
         );
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(doc => ({

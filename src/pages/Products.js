@@ -62,6 +62,7 @@ export default function Products() {
       const q = searchQuery.toLowerCase();
       list = list.filter(p =>
         (p.name?.toLowerCase().includes(q)) ||
+        (p.sku?.toLowerCase().includes(q)) ||
         (p.productCode?.toLowerCase().includes(q)) ||
         (p.category?.toLowerCase().includes(q))
       );
@@ -113,10 +114,17 @@ export default function Products() {
     }
     const data = { ...form, sku: code, productCode: code, image: img, price: Number(form.price) || 0, cost: Number(form.cost) || 0, currentStock: Number(form.currentStock) || 0, minimumStock: Number(form.minimumStock) || 0, reorderPoint: Number(form.reorderPoint) || 0, physicalCount: Number(form.physicalCount) || 0 };
     try {
-      editingProduct ? updateProduct(editingProduct.id, data) : addProduct(data);
+      if (editingProduct) {
+        await updateProduct(editingProduct.id, data);
+      } else {
+        await addProduct(data);
+      }
       setSnack({ open: true, msg: editingProduct ? 'Product updated!' : 'Product added!', sev: 'success' });
       closeDialog();
-    } catch { setSnack({ open: true, msg: 'Error saving product.', sev: 'error' }); }
+    } catch (error) {
+      console.error('Error saving product:', error);
+      setSnack({ open: true, msg: 'Error saving product.', sev: 'error' });
+    }
   };
 
   /* ── Columns ── */
@@ -198,7 +206,26 @@ export default function Products() {
       renderCell: ({ row }) => (
         <Box sx={{ display: 'flex', gap: 0.5 }}>
           {hasPermission('edit') && <Tooltip title="Edit"><IconButton size="small" onClick={() => openEdit(row)} sx={{ color: BLUE }}><EditIcon fontSize="small" /></IconButton></Tooltip>}
-          {hasPermission('all') && <Tooltip title="Delete"><IconButton size="small" onClick={() => { if (window.confirm('Delete this product?')) { deleteProduct(row.id); setSnack({ open: true, msg: 'Deleted.', sev: 'success' }); } }} sx={{ color: '#ef4444' }}><DeleteIcon fontSize="small" /></IconButton></Tooltip>}
+          {hasPermission('all') && (
+            <Tooltip title="Delete">
+              <IconButton 
+                size="small" 
+                onClick={async () => { 
+                  if (window.confirm('Delete this product?')) { 
+                    try {
+                      await deleteProduct(row.id); 
+                      setSnack({ open: true, msg: 'Deleted.', sev: 'success' }); 
+                    } catch (err) {
+                      setSnack({ open: true, msg: 'Failed to delete product.', sev: 'error' });
+                    }
+                  } 
+                }} 
+                sx={{ color: '#ef4444' }}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       )
     },

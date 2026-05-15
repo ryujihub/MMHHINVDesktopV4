@@ -7,15 +7,15 @@ If you're a store staff or admin and just installed the app, follow these three 
 
 1. Open the app from the Start menu (or run the installed executable).
 2. Sign in using your account. If you don't have one, ask your administrator to create it.
-3. Create a product and make a test sales order:
+3. Create a product and view it in the dashboard:
 	- Products → Add Product → fill Name, Category, Price, SKU, Starting stock → Save.
-	- Sales Orders → New Order → add product, set quantity → Save.
+	- Dashboard → View stock levels and low stock alerts.
 
 Tip: Open the Guide Manual anytime from the user menu (click your avatar in the top-right → Guide Manual).
 
 Purpose
 -------
-This User Manual explains how to use the Metro Manila Hills Hardware (MMH) Inventory Desktop application for day-to-day tasks: managing products, processing sales orders, running reports, and basic troubleshooting.
+This User Manual explains how to use the Metro Manila Hills Hardware (MMH) Inventory Desktop application for day-to-day tasks: managing products, tracking inventory levels, running reports, and basic troubleshooting.
 
 Target audience: store staff and administrators who use the app to perform daily operations.
 
@@ -24,7 +24,7 @@ A. Contents of a User Manual
 1. Introduction
 ----------------
 - Name of the system: Metro Manila Hills Hardware — Inventory Desktop (MMH Inventory Desktop)
-- Purpose: Manage products, inventory levels, sales orders, and basic reporting from a desktop application.
+- Purpose: Manage products, inventory levels, and basic reporting from a desktop application.
 - Target users: Store staff (data entry, sales) and Admin users (management, reports, user management).
 
 2. Getting Started
@@ -48,11 +48,11 @@ Login or account creation steps
 --------------------------
 Main layout
 - Header: top-right contains the user avatar/menu. Click the avatar to open Profile, Guide Manual, Settings, or Logout.
-- Sidebar: left side contains navigation to Dashboard, Products, Categories, Sales Orders, Reports, Settings, and User Management (Admin only).
+- Sidebar: grouped into Main (Dashboard, Guide & Manual), Inventory (Products, Categories), Reports (Reports Overview, Full Business, Sales, Inventory), Management (User Management), and System (Settings).
 - Main area: shows the content for the selected page (tables, forms, graphs).
 
 Common UI elements
-- Add / New buttons: create new records (Product, Order).
+- Add / New buttons: create new records (Product, Category).
 - Row actions: Edit (pencil), Delete (trash), Adjust Stock (inventory adjustments) accessible from lists.
 - Filters and search: usually at the top of report or listing pages to restrict results by date, category, or keyword.
 - Export buttons: appear on Reports and listing pages to download CSV/Excel; some pages support PDF export.
@@ -77,33 +77,21 @@ Products (Catalog)
 
 Inventory
 - Adjust stock (manual correction)
-	1. Open a product and click Adjust Stock.
-	2. Enter the adjustment amount and reason (stocktake, damage, correction).
-	3. Save. The adjustment is recorded in the stock movement history.
-- Stocktake (count)
-	1. Use the Inventory page to record counted quantities for items.
-	2. Submit or save adjustments to reconcile system stock with counted stock.
-
-Sales Orders
-- Create a new sales order
-	1. Navigate to Sales Orders → New Order.
-	2. Add customer details (name, phone, delivery address) or select a walk-in customer.
-	3. Add products by searching name or SKU, set quantities, and apply discounts if needed.
-	4. Set payment status (Paid / Pending) and fulfillment status (Pending / Fulfilled).
-	5. Save the order and print or export an invoice if needed.
-- Process a return
-	1. Locate the original order and choose Create Return.
-	2. Select items being returned, update quantities, and process refund or store credit as required.
+	1. Open a product and click Edit or Adjust Stock if available.
+	2. Update the stock quantity or add/subtract as needed.
+	3. Save to update current inventory.
+- Track stock levels
+	1. Use the Dashboard to see low-stock alerts.
+	2. Reorder items when they fall below the reorder point.
 
 6. Advanced Features
 --------------------
 Reports
-- Access: Reports → choose Sales, Inventory, or Full Business (Comprehensive) report.
+- Access: Reports → choose Reports Overview, Full Business Report, Sales Report, or Inventory Report.
 - Filters: set date range and other filters (staff, product, category) then run the report.
 - Export:
-	- Sales and Inventory pages provide CSV/Excel export buttons (Export Excel / Export Report).
-	- The Comprehensive Report includes a PDF export (produced via the app's exporter).
-	- Note: Some PDF/Print buttons shown on Sales/Inventory pages may be placeholders and not wired; use CSV export if PDF does not work.
+	- Reports pages provide CSV/Excel/PDF export options where available.
+	- The Full Business Report includes a professional PDF export.
 
 Settings
 - Access general app settings from the Settings page (visual preferences, default values).
@@ -120,9 +108,9 @@ How to reset password
 - If no reset link is available, contact your administrator (Admin can reset user passwords via the User Management page or via Firebase console).
 
 How to generate a report
-- Navigate to Reports → choose Sales / Inventory / Comprehensive.
+- Navigate to Reports → choose Reports Overview / Full Business / Sales / Inventory.
 - Set the date range and any filters.
-- Click Run (or View) and then click Export to download results (CSV or PDF depending on the page).
+- Click Export or Print to download results.
 
 8. Error Messages and Solutions
 -------------------------------
@@ -141,9 +129,6 @@ A: Open the user menu (avatar top-right) → Guide Manual. The manual displayed 
 
 Q: How do I back up data?
 A: Data is stored in Firestore (cloud). Contact your admin to schedule Firestore exports; only Admins or IT can perform backups.
-
-Q: Can I print invoices?
-A: The Sales Orders page shows Print/Export options. Use Export to generate a PDF or CSV; if Print does not work, export and print the file from your system.
 
 10. Contact Information
 -----------------------

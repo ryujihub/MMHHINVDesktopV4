@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Box, CssBaseline } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/index.js';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns/index.js';
@@ -43,6 +43,7 @@ const AdminRoute = ({ children }) => {
 // Main App Content
 const AppContent = () => {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
 
   // Handle Electron menu events
   useEffect(() => {

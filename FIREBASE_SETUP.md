@@ -54,10 +54,6 @@ Your Firebase configuration is already set up in `src/config/firebase.js` with y
 - `users` - User profiles and permissions
 - `products` - Inventory products
 - `categories` - Product categories
-- `suppliers` - Vendor information
-- `customers` - Customer database
-- `purchaseOrders` - Incoming inventory orders
-- `salesOrders` - Outgoing sales orders
 
 #### Security Rules (Optional)
 For production, you can set up Firestore security rules:
@@ -127,9 +123,7 @@ await setupInitialData();
 
 This will create:
 - 5 product categories
-- 3 suppliers
 - 3 sample products
-- 2 sample customers
 
 ## 🧪 Testing the Setup
 
@@ -143,7 +137,7 @@ npm run electron-dev
 - **Staff**: `staff@mmhhardware.com` / `staff123`
 
 ### 3. Verify Data Loading
-- Check if products, categories, and suppliers load
+- Check if products and categories load
 - Try adding a new product
 - Verify real-time updates
 
@@ -211,8 +205,7 @@ After successful setup:
 1. **Customize Data**: Modify sample data to match your business
 2. **User Management**: Add your actual staff members
 3. **Categories**: Adjust product categories for your inventory
-4. **Suppliers**: Add your real supplier information
-5. **Products**: Import your actual product catalog
+4. **Products**: Import your actual product catalog
 
 ---
 

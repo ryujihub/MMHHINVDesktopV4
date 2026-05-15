@@ -87,8 +87,7 @@ The system comes with pre-configured demo accounts:
 1. **Dashboard** - Overview and key metrics
 2. **Products** - Inventory management
 3. **Categories** - Product categorization
-4. **Sales Orders** - Outgoing inventory
-5. **Reports** - Analytics and insights
+4. **Reports** - Analytics and insights
 
 ## 🚀 Quick Start Guide
 
@@ -218,21 +217,20 @@ For support and questions:
 ## Project Documentation: MMHH Inventory Desktop Application (Version 3)
 
 ### 1. Objectives:
-*   To provide a robust and user-friendly desktop application for managing inventory, sales, and product categories.
-*   To enable efficient tracking of products, stock levels, and sales orders.
+*   To provide a robust and user-friendly desktop application for managing inventory and product categories.
+*   To enable efficient tracking of products and stock levels.
 *   To facilitate user authentication and authorization for secure access to inventory data.
 *   To generate reports for better business insights and decision-making.
 *   To offer a seamless user experience through a responsive and intuitive interface.
-*   To integrate with Firebase for real-time data synchronization, authentication, and notification services.
+*   To integrate with Firebase for real-time data synchronization and authentication.
 
 ### 2. Scope:
 *   **User Management:** User registration, login, logout, profile management, and role-based access control (e.g., admin, staff).
 *   **Product Management:** Adding, editing, deleting, and viewing products with details such as name, description, price, stock quantity, and category.
 *   **Category Management:** Creating, updating, and deleting product categories.
 *   **Inventory Tracking:** Real-time updates of stock levels, low-stock alerts, and inventory adjustments.
-*   **Sales Order Management:** Creating, processing, and tracking sales orders, including customer details, product lists, and order status.
 *   **Reporting:** Generation of sales reports, inventory reports, and other custom reports to provide business insights.
-*   **Notifications:** System notifications for important events like low stock or new orders.
+*   **Notifications:** System notifications for important events like low stock.
 *   **Technology Stack:** React for the frontend, Electron for desktop application wrapping, and Firebase (Firestore, Authentication, Cloud Messaging) for backend services.
 
 ### 3. Delimitations:

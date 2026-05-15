@@ -72,23 +72,7 @@ const ComprehensiveReport = () => {
   const { products, orders, totalLostAmount } = useInventory();
   const { isAdmin, user } = useAuth();
 
-  // Check if user is admin
-  if (!isAdmin()) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          Access Denied: You don't have permission to view Comprehensive Report.
-        </Alert>
-        <Typography variant="body1">
-          This page is restricted to administrators only. Please contact your administrator if you need access to reports.
-        </Typography>
-      </Box>
-    );
-  }
 
-  if (!products || !orders) {
-    return <Box sx={{ p: 3 }}>Loading comprehensive report...</Box>;
-  }
 
   // Filters
   const [startDate, setStartDate] = useState(() => {
@@ -562,6 +546,24 @@ const ComprehensiveReport = () => {
       alert('Error generating PDF report. Please try again.');
     }
   };
+
+  // Check if user is admin
+  if (!isAdmin()) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Access Denied: You don't have permission to view Comprehensive Report.
+        </Alert>
+        <Typography variant="body1">
+          This page is restricted to administrators only. Please contact your administrator if you need access to reports.
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!products || !orders) {
+    return <Box sx={{ p: 3 }}>Loading comprehensive report...</Box>;
+  }
 
   return (
     <Box sx={{ backgroundColor: '#f8fafc', minHeight: '100vh', p: 3 }}>

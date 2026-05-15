@@ -76,6 +76,18 @@ const Reports = () => {
   const { orders, products } = useInventory();
   const { isAdmin } = useAuth();
 
+  const kpis = useMemo(() => {
+    const os = orders || [];
+    const ps = products || [];
+    const totalRevenue = os.reduce((s, o) => s + (o.total || 0), 0);
+    const totalOrders = os.length;
+    const avgOrder = totalOrders ? totalRevenue / totalOrders : 0;
+    const totalProducts = ps.length;
+    const lowStock = ps.filter(p => p.currentStock <= p.reorderPoint).length;
+    const inventoryValue = ps.reduce((s, p) => s + (p.currentStock * (p.cost || 0)), 0);
+    return { totalRevenue, totalOrders, avgOrder, totalProducts, lowStock, inventoryValue };
+  }, [orders, products]);
+
   if (!isAdmin()) {
     return (
       <Box sx={{ p: 3 }}>
@@ -85,16 +97,6 @@ const Reports = () => {
   }
 
   if (!orders || !products) return <Box sx={{ p: 3 }}>Loading...</Box>;
-
-  const kpis = useMemo(() => {
-    const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
-    const totalOrders = orders.length;
-    const avgOrder = totalOrders ? totalRevenue / totalOrders : 0;
-    const totalProducts = products.length;
-    const lowStock = products.filter(p => p.currentStock <= p.reorderPoint).length;
-    const inventoryValue = products.reduce((s, p) => s + (p.currentStock * (p.cost || 0)), 0);
-    return { totalRevenue, totalOrders, avgOrder, totalProducts, lowStock, inventoryValue };
-  }, [orders, products]);
 
   return (
     <Box>

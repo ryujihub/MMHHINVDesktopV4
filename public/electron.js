@@ -4,6 +4,10 @@ const fs = require('fs');
 const { pathToFileURL } = require('url');
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
+// Fix for GPU/Network service crashes on some Windows environments
+app.disableHardwareAcceleration();
+app.commandLine.appendSwitch('no-sandbox');
+
 let mainWindow;
 
 // Ensure logs go to a file in production so we can debug startup issues

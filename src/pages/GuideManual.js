@@ -43,7 +43,7 @@ Version: 1.0.0
 A modern, desktop-based inventory management system built with React, Electron, and Material-UI for Metro Manila Hills Hardware.
 
 Core goals:
-- Provide robust inventory and sales order management.
+- Provide robust inventory and product management.
 - Offer role-based access (Admin, Staff).
 - Provide desktop packaging through Electron with offline capability.
 
@@ -94,7 +94,7 @@ REACT_APP_VERSION=1.0.0
 1. Create a Firebase project (example project ID: \`hardwareinventory-65123\`).
 2. In Firebase Console, enable Email/Password authentication.
 3. Create users (admin/staff) in Authentication and add corresponding documents in \`users\` Firestore collection with \`role\` fields.
-4. Create Firestore collections used by the app: \`users\`, \`products\`, \`categories\`, \`suppliers\`, \`customers\`, \`purchaseOrders\`, \`salesOrders\`.
+4. Create Firestore collections used by the app: \`inventory\`, \`categories\`, \`users\`, \`settings\`, \`activity\`.
 5. (Optional) Update Firestore security rules to restrict write operations to admins.
 
 Demo accounts used for testing:
@@ -128,9 +128,9 @@ Summary of features (from README):
 - Full CRUD operations for products and categories
 - Inventory tracking, low stock alerts, reorder points
 - User role management (Admin/Staff)
-- Bulk import/export (CSV/XLSX)
+- Bulk import/export (CSV/XLSX/PDF)
 - Search and filtering
-- Charts and reporting
+- Charts and reporting (Overview, Business, Sales, Inventory)
 - Desktop packaging with offline capability
 
 ---
@@ -142,9 +142,8 @@ Selected top-level folders and purpose:
 - \`src/\` — React source code (components, pages, contexts, services)
 - \`build/\` — compiled production build
 - \`dist-out/\` — packaged app and artifacts
-- \`flowcharts/\` — drawio and diagrams
 - \`docs/\` — generated docs (this manual)
-- \`tools/\` — utility scripts (includes \`generate_manual.py\`)
+- \`tools/\` — utility scripts
 
 Important source files:
 - \`src/config/firebase.js\` — Firebase configuration
@@ -173,13 +172,13 @@ Common problems and quick fixes:
 ## 8. FAQ
 
 Q: Where is my data stored?
-A: Data is stored locally (localStorage) by default, unless configured to use a remote backend.
+A: Data is stored in Firestore (cloud).
 
 Q: How do I backup data?
-A: Use the Export feature (CSV/XLSX) to save a copy; keep periodic backups off-app.
+A: Use the Export feature (CSV/XLSX/PDF) to save a copy; keep periodic backups off-app.
 
 Q: How do I add users?
-A: Use Firebase Console (Authentication) or the app's User Management page (Admin only).
+A: Use the app's User Management page (Admin only) or Firebase Console.
 
 ---
 
@@ -202,35 +201,6 @@ For help:
 ### Appendix B — Full Firebase Setup (excerpt)
 
 (For the full Firebase setup guide, see \`FIREBASE_SETUP.md\` in the project root.)
-
----
-
-## How to convert this Markdown manual into a DOCX (three easy ways)
-
-1) Microsoft Word
-- Open Word, choose Open → select \`MMHH_User_Manual.md\` and Word will import Markdown; then Save As → Word Document (.docx).
-
-2) Pandoc (recommended for reliable conversion):
-- Install pandoc (https://pandoc.org/)
-- Run:
-\`\`\`bash
-pandoc docs/MMHH_User_Manual.md -o docs/MMHH_User_Manual.docx --toc
-\`\`\`
-
-3) Use the included Python script (if you have Python installed)
-- Install python-docx: \`python -m pip install python-docx\`
-- Run the generator script (created at \`tools/generate_manual.py\`):
-\`\`\`bash
-python tools/generate_manual.py
-\`\`\`
-This will create \`docs/MMHH_User_Manual.docx\` directly.
-
----
-
-## Notes & Next Steps
-
-- I generated this manual from the repository README and Firebase setup docs. If you'd like screenshots, step-by-step screenshots, or branded styling (logo, headers/footers), tell me which pages/screens you want captured and I will add them.
-- If you want the DOCX generated for you here, I can attempt to run the Python generator — but the environment needs Python available. If you can run the commands above locally, the script will create the DOCX automatically.
 
 ---
 
