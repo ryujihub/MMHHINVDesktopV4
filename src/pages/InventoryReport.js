@@ -56,7 +56,7 @@ import {
 const currency = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const InventoryReport = () => {
-  const { products, orders, totalLostAmount } = useInventory();
+  const { products, totalLostAmount } = useInventory();
   const { isAdmin, user } = useAuth();
 
 
@@ -83,14 +83,7 @@ const InventoryReport = () => {
     return map;
   }, [products]);
 
-  // Filtered orders for the period
-  const filteredOrders = useMemo(() => {
-    return (orders || []).filter((s) => {
-      const t = new Date(s.date).getTime();
-      const inRange = t >= startDate.getTime() && t <= endDate.getTime();
-      return inRange;
-    });
-  }, [orders, startDate, endDate]);
+
 
   // Inventory KPIs
   const kpis = useMemo(() => {
@@ -101,40 +94,7 @@ const InventoryReport = () => {
     return { totalProducts, lowStockProducts, outOfStockProducts, totalValue };
   }, [products]);
 
-  // Revenue by category (based on items * price)
-  const revenueByCategory = useMemo(() => {
-    const map = new Map();
-    for (const s of (filteredOrders || [])) {
-      for (const item of s.items || []) {
-        const category = item.category || 'Uncategorized';
-        const p = productMap.get(item.productId);
-        const revenue = (item.quantity || 0) * (item.price || p?.sellingPrice || p?.price || 0);
-        map.set(category, (map.get(category) || 0) + revenue);
-      }
-    }
-    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
-  }, [filteredOrders, productMap]);
 
-  // Top products by quantity sold
-  const topProducts = useMemo(() => {
-    const qtyMap = new Map();
-    for (const s of (filteredOrders || [])) {
-      for (const item of s.items || []) {
-        qtyMap.set(item.productId, (qtyMap.get(item.productId) || 0) + (item.quantity || 0));
-      }
-    }
-    const rows = Array.from(qtyMap.entries()).map(([productId, quantity]) => {
-      const productItem = filteredOrders.flatMap(order => order.items).find(item => item.productId === productId);
-      return {
-        product: productItem?.productName || 'Unknown Product',
-        category: productItem?.category || 'Uncategorized',
-        quantity,
-        currentStock: productMap.get(productId)?.currentStock || 0
-      };
-    });
-    rows.sort((a, b) => b.quantity - a.quantity);
-    return rows.slice(0, 10);
-  }, [filteredOrders, productMap]);
 
   // Low stock products
   const lowStockProducts = useMemo(() => {
@@ -448,61 +408,8 @@ const InventoryReport = () => {
 
       {/* Charts */}
       <Grid container spacing={4} sx={{ mb: 4 }}>
-        <Grid item xs={12} lg={8}>
-          <Card sx={{
-            borderRadius: 3,
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-            border: '1px solid #e2e8f0'
-          }}>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" sx={{
-                fontWeight: 600,
-                color: '#1e293b',
-                mb: 3,
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                <TrendingUpIcon sx={{ mr: 1, color: '#10b981' }} />
-                Revenue by Product Category
-              </Typography>
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={revenueByCategory}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis
-                    dataKey="name"
-                    stroke="#64748b"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    stroke="#64748b"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `${currency(value)}`}
-                  />
-                  <Tooltip
-                    formatter={(v) => [currency(v), 'Revenue']}
-                    labelStyle={{ color: '#1e293b' }}
-                    contentStyle={{
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                    }}
-                  />
-                  <Bar
-                    dataKey="value"
-                    fill="#10b981"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} lg={4}>
+
+        <Grid item xs={12} lg={12}>
           <Card sx={{
             borderRadius: 3,
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
@@ -591,111 +498,7 @@ const InventoryReport = () => {
         </Grid>
       </Grid>
 
-      {/* Top Products Table */}
-      <Card sx={{
-        borderRadius: 3,
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-        border: '1px solid #e2e8f0',
-        mb: 4
-      }}>
-        <CardContent sx={{ p: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <TrendingUpIcon sx={{ color: '#10b981', mr: 1 }} />
-            <Typography variant="h5" sx={{ fontWeight: 600, color: '#1e293b' }}>
-              Best Performing Products
-            </Typography>
-          </Box>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: '#f8fafc' }}>
-                <TableCell sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #e2e8f0' }}>
-                  Product Name
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #e2e8f0' }}>
-                  Category
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #e2e8f0' }}>
-                  Units Sold
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #e2e8f0' }}>
-                  Current Stock
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600, color: '#374151', borderBottom: '2px solid #e2e8f0' }}>
-                  Status
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {topProducts.map((row, idx) => (
-                <TableRow key={idx} sx={{
-                  '&:hover': { backgroundColor: '#f8fafc' },
-                  borderBottom: '1px solid #f1f5f9'
-                }}>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Box sx={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: '50%',
-                        backgroundColor: idx < 3 ? '#10b981' : '#e2e8f0',
-                        color: idx < 3 ? 'white' : '#64748b',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 600,
-                        fontSize: '0.875rem',
-                        mr: 2
-                      }}>
-                        {idx + 1}
-                      </Box>
-                      <Typography variant="body1" sx={{ fontWeight: 500, color: '#1e293b' }}>
-                        {row.product}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={row.category}
-                      size="small"
-                      sx={{
-                        backgroundColor: '#e0f2fe',
-                        color: '#0369a1',
-                        fontWeight: 500
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                      {row.quantity.toLocaleString()}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body1" sx={{ fontWeight: 500, color: '#64748b' }}>
-                      {row.currentStock.toLocaleString()}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Chip
-                      label={row.currentStock > 10 ? 'In Stock' : row.currentStock > 0 ? 'Low Stock' : 'Out of Stock'}
-                      color={row.currentStock > 10 ? 'success' : row.currentStock > 0 ? 'warning' : 'error'}
-                      size="small"
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-              {topProducts.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} sx={{ textAlign: 'center', py: 4 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      No sales data available for the selected period.
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+
 
       {/* Low Stock Products Table */}
       <Card sx={{

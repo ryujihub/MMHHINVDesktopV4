@@ -130,7 +130,7 @@ Summary of features (from README):
 - User role management (Admin/Staff)
 - Bulk import/export (CSV/XLSX/PDF)
 - Search and filtering
-- Charts and reporting (Overview, Business, Sales, Inventory)
+- Charts and reporting (Overview, Inventory)
 - Desktop packaging with offline capability
 
 ---

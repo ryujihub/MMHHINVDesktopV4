@@ -25,7 +25,7 @@ A. Contents of a User Manual
 ----------------
 - Name of the system: Metro Manila Hills Hardware — Inventory Desktop (MMH Inventory Desktop)
 - Purpose: Manage products, inventory levels, and basic reporting from a desktop application.
-- Target users: Store staff (data entry, sales) and Admin users (management, reports, user management).
+- Target users: Store staff (data entry, inventory) and Admin users (management, reports, user management).
 
 2. Getting Started
 ------------------
@@ -48,7 +48,7 @@ Login or account creation steps
 --------------------------
 Main layout
 - Header: top-right contains the user avatar/menu. Click the avatar to open Profile, Guide Manual, Settings, or Logout.
-- Sidebar: grouped into Main (Dashboard, Guide & Manual), Inventory (Products, Categories), Reports (Reports Overview, Full Business, Sales, Inventory), Management (User Management), and System (Settings).
+- Sidebar: grouped into Main (Dashboard, Guide & Manual), Inventory (Products, Categories), Reports (Reports Overview, Inventory), Management (User Management), and System (Settings).
 - Main area: shows the content for the selected page (tables, forms, graphs).
 
 Common UI elements
@@ -87,11 +87,11 @@ Inventory
 6. Advanced Features
 --------------------
 Reports
-- Access: Reports → choose Reports Overview, Full Business Report, Sales Report, or Inventory Report.
+- Access: Reports → choose Reports Overview or Inventory Report.
 - Filters: set date range and other filters (staff, product, category) then run the report.
 - Export:
 	- Reports pages provide CSV/Excel/PDF export options where available.
-	- The Full Business Report includes a professional PDF export.
+
 
 Settings
 - Access general app settings from the Settings page (visual preferences, default values).
@@ -108,7 +108,7 @@ How to reset password
 - If no reset link is available, contact your administrator (Admin can reset user passwords via the User Management page or via Firebase console).
 
 How to generate a report
-- Navigate to Reports → choose Reports Overview / Full Business / Sales / Inventory.
+- Navigate to Reports → choose Reports Overview / Inventory.
 - Set the date range and any filters.
 - Click Export or Print to download results.
 

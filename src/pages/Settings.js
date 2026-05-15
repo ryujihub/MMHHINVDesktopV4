@@ -52,7 +52,7 @@ const BackupManagement = ({ onSuccess, onError }) => {
     try {
       const backupData = await settingsService.backupAllData();
       setBackupStats({
-        inventory: backupData.collections.inventory?.length || 0,
+        inventory: backupData.collections.products?.length || 0,
         categories: backupData.collections.categories?.length || 0,
         orders: backupData.collections.orders?.length || 0,
         users: backupData.collections.users?.length || 0,
@@ -95,7 +95,7 @@ const BackupManagement = ({ onSuccess, onError }) => {
             Snapshot from {new Date(backupStats.timestamp).toLocaleString()}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            {[['Inventory', backupStats.inventory, '#3b82f6'], ['Categories', backupStats.categories, '#8b5cf6'], ['Orders', backupStats.orders, '#10b981'], ['Users', backupStats.users, '#f59e0b']].map(([label, val, color]) => (
+            {[['Inventory', backupStats.inventory, '#3b82f6'], ['Categories', backupStats.categories, '#8b5cf6'], ['Users', backupStats.users, '#f59e0b']].map(([label, val, color]) => (
               <Box key={label} sx={{ textAlign: 'center', px: 2, py: 1, bgcolor: '#fff', borderRadius: 2, border: '1px solid #e2e8f0', minWidth: 80 }}>
                 <Typography variant="h6" fontWeight={800} color={color}>{val}</Typography>
                 <Typography variant="caption" color="text.secondary">{label}</Typography>
@@ -287,11 +287,11 @@ const Settings = () => {
       {isAdmin() && (
         <Paper elevation={0} sx={{ borderRadius: 3, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
           <Box sx={{ p: 2.5, borderBottom: '1px solid #f1f5f9' }}>
-            {sectionHeader(<StorageIcon sx={{ fontSize: 22 }} />, 'Data Backup & Restore', 'Export and import all system data including inventory, sales, and settings', '#10b981', 'Admin Only')}
+            {sectionHeader(<StorageIcon sx={{ fontSize: 22 }} />, 'Data Backup & Restore', 'Export and import all system data including inventory, categories, and settings', '#10b981', 'Admin Only')}
           </Box>
           <Box sx={{ p: 2.5 }}>
             <Alert severity="info" sx={{ mb: 2.5, borderRadius: 2, '& .MuiAlert-message': { fontSize: '0.85rem' } }}>
-              Backup includes all inventory items, categories, sales orders, users, and settings. Restore will replace all current data.
+              Backup includes all inventory items, categories, users, and settings. Restore will replace all current data.
             </Alert>
             <BackupManagement onSuccess={handleBackupSuccess} onError={handleBackupError} />
           </Box>

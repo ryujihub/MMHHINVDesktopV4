@@ -59,7 +59,7 @@ const QuickStartModal = () => {
             <ListItemText primary="3. Monitor your dashboard" secondary="Check low stock alerts, total value, and quick actions from the Dashboard." />
           </ListItem>
           <ListItem>
-            <ListItemText primary="4. View reports" secondary="Admins can access Reports & Analytics for sales, inventory, and business insights." />
+            <ListItemText primary="4. View reports" secondary="Admins can access Reports & Analytics for inventory and business insights." />
           </ListItem>
         </List>
 

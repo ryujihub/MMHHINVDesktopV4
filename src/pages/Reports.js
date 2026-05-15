@@ -73,20 +73,16 @@ const ReportCard = ({ icon, title, description, color, bg, buttonLabel, onClick 
 
 const Reports = () => {
   const navigate = useNavigate();
-  const { orders, products } = useInventory();
+  const { products } = useInventory();
   const { isAdmin } = useAuth();
 
   const kpis = useMemo(() => {
-    const os = orders || [];
     const ps = products || [];
-    const totalRevenue = os.reduce((s, o) => s + (o.total || 0), 0);
-    const totalOrders = os.length;
-    const avgOrder = totalOrders ? totalRevenue / totalOrders : 0;
     const totalProducts = ps.length;
     const lowStock = ps.filter(p => p.currentStock <= p.reorderPoint).length;
     const inventoryValue = ps.reduce((s, p) => s + (p.currentStock * (p.cost || 0)), 0);
-    return { totalRevenue, totalOrders, avgOrder, totalProducts, lowStock, inventoryValue };
-  }, [orders, products]);
+    return { totalProducts, lowStock, inventoryValue };
+  }, [products]);
 
   if (!isAdmin()) {
     return (
@@ -96,7 +92,7 @@ const Reports = () => {
     );
   }
 
-  if (!orders || !products) return <Box sx={{ p: 3 }}>Loading...</Box>;
+  if (!products) return <Box sx={{ p: 3 }}>Loading...</Box>;
 
   return (
     <Box>
@@ -110,15 +106,7 @@ const Reports = () => {
 
       {/* KPI Grid */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={4}>
-          <KPI icon={<MoneyIcon />} label="Total Revenue" value={currency(kpis.totalRevenue)} color="#3b82f6" bg="#eff6ff" />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <KPI icon={<CartIcon />} label="Total Sales" value={kpis.totalOrders} color="#10b981" bg="#f0fdf4" />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <KPI icon={<TrendingIcon />} label="Avg. Order Value" value={currency(kpis.avgOrder)} color="#f59e0b" bg="#fefce8" />
-        </Grid>
+
         <Grid item xs={12} sm={6} md={4}>
           <KPI icon={<InventoryIcon />} label="Total Products" value={kpis.totalProducts} color="#8b5cf6" bg="#faf5ff" />
         </Grid>
@@ -137,27 +125,8 @@ const Reports = () => {
 
       {/* Report Navigation Cards */}
       <Grid container spacing={2}>
-        <Grid item xs={12} md={4}>
-          <ReportCard
-            icon={<AssessmentIcon />}
-            title="Full Business Report"
-            description="Complete inventory and sales analysis with insights and trends."
-            color="#8b5cf6" bg="#faf5ff"
-            buttonLabel="View Report"
-            onClick={() => navigate('/reports/comprehensive')}
-          />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <ReportCard
-            icon={<ReceiptIcon />}
-            title="Sales Report"
-            description="Sales performance, revenue trends, and customer insights."
-            color="#3b82f6" bg="#eff6ff"
-            buttonLabel="View Report"
-            onClick={() => navigate('/reports/sales')}
-          />
-        </Grid>
-        <Grid item xs={12} md={4}>
+
+        <Grid item xs={12} md={12}>
           <ReportCard
             icon={<InventoryIcon />}
             title="Inventory Report"

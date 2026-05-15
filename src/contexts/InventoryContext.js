@@ -17,7 +17,6 @@ export const InventoryProvider = ({ children }) => {
   // State for all inventory data
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [orders, setOrders] = useState([]); 
   const [loading, setLoading] = useState(true);
 
   // CRUD Operations for Products
@@ -272,26 +271,7 @@ export const InventoryProvider = ({ children }) => {
     }
   };
 
-  const recordSale = async (items) => {
-    try {
-      for (const item of items) {
-        await updateStock(item.productId, item.quantity, 'deduct');
-      }
-      // Optionally, add a log for the entire sale transaction
-      try {
-        await firebaseData.activity.add({
-          type: 'sale.recorded',
-          message: `Sale recorded for multiple items.`,
-          entityType: 'sale',
-          userId: user?.uid || null,
-          userName: user?.name || user?.email || 'Unknown'
-        });
-      } catch (_) {}
-    } catch (error) {
-      console.error('Error recording sale:', error);
-      throw error;
-    }
-  };
+
 
   const getLowStockProducts = () => {
     return (products || []).filter(product => (product.currentStock || 0) <= (product.reorderPoint || 0));
@@ -316,67 +296,21 @@ export const InventoryProvider = ({ children }) => {
       try {
         setLoading(true);
         
-        // Load all data in parallel
-        const [productsData, categoriesData, ordersData] = await Promise.all([
+        const [productsData, categoriesData] = await Promise.all([
           firebaseData.products.getAll(),
           firebaseData.categories.getAll(),
-          firebaseData.sales.getAll(), // Load orders data (firebaseData.sales now points to 'orders' collection)
         ]);
         
         console.log('Fetched productsData:', productsData);
         console.log('Fetched categoriesData:', categoriesData);
-        console.log('Fetched ordersData:', ordersData);
-
-        // Process orders data to include 'date' and 'total' fields
-        const processedOrders = ordersData.map(order => {
-          // Ensure product name and category are available for reporting
-          const itemsWithProductInfo = (order.items || []).map(item => {
-            let productId = item.id;
-            let product = null;
-            let productName = item.name || 'Unknown Product';
-            let category = 'Uncategorized';
-
-            if (!item.id) {
-              console.warn(`Item in order ${order.id} has undefined ID. Generating a fallback productId.`);
-              productId = `unknown-product-${item.name || 'no-name'}-${Math.random().toString(36).substring(7)}`;
-            } else {
-              product = productsData.find(p => p.id === item.id);
-              if (product) {
-                productName = product.name;
-                category = product.category || 'Uncategorized';
-              } else {
-                console.warn(`Product with ID ${item.id} not found in inventory for order ${order.id}. Using item.name as product name.`);
-              }
-            }
-
-            return {
-              ...item, // Return the original item properties
-              productId,
-              productName,
-              category,
-            };
-          });
-
-          return {
-            ...order,
-            date: order.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-            total: itemsWithProductInfo.reduce((sum, item) => {
-              const price = item.price || 0; // Use item.price from the processed item
-              return sum + (item.quantity || 0) * price;
-            }, 0),
-            items: itemsWithProductInfo,
-          };
-        });
 
         setProducts(productsData);
         setCategories(categoriesData);
-        setOrders(processedOrders); // Set processed orders data
       } catch (error) {
         console.error('Error loading data:', error);
         // Set empty arrays if Firebase is not available
         setProducts([]);
         setCategories([]);
-        setOrders([]); // Also set orders to empty array on error
       } finally {
         setLoading(false);
       }
@@ -400,7 +334,6 @@ export const InventoryProvider = ({ children }) => {
     // Data
     products,
     categories,
-    orders, // Include orders in context value
     loading,
     
     // Product operations
@@ -419,7 +352,6 @@ export const InventoryProvider = ({ children }) => {
     updateStock,
     getLowStockProducts,
     updatePhysicalCount,
-    recordSale, // Add recordSale to context value
     totalLostAmount, // Add totalLostAmount to context value
   };
 

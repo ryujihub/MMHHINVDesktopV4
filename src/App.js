@@ -14,9 +14,7 @@ import Dashboard from './pages/Dashboard.js';
 import Products from './pages/Products.js';
 import Categories from './pages/Categories.js';
 import Reports from './pages/Reports.js';
-import SalesReport from './pages/SalesReport.js';
 import InventoryReport from './pages/InventoryReport.js';
-import ComprehensiveReport from './pages/ComprehensiveReport.js';
 import GuideManual from './pages/GuideManual.js';
 import QuickStartModal from './components/QuickStart/QuickStartModal.js';
 import Settings from './pages/Settings.js';
@@ -97,8 +95,8 @@ const AppContent = () => {
             <Route path="/products" element={<Products />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/reports" element={<AdminRoute><Reports /></AdminRoute>} />
-            <Route path="/reports/comprehensive" element={<AdminRoute><ComprehensiveReport /></AdminRoute>} />
-            <Route path="/reports/sales" element={<AdminRoute><SalesReport /></AdminRoute>} />
+
+
             <Route path="/reports/inventory" element={<AdminRoute><InventoryReport /></AdminRoute>} />
             <Route path="/user-management" element={<AdminRoute><UserManagement /></AdminRoute>} />
             <Route path="/settings" element={<Settings />} />

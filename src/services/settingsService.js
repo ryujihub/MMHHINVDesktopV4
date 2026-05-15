@@ -56,7 +56,7 @@ export const settingsService = {
       };
 
       // Collections to backup
-      const collections = ['inventory', 'categories', 'orders', 'users', 'settings', 'activity'];
+      const collections = ['products', 'categories', 'settings', 'activity'];
 
       for (const collectionName of collections) {
         try {

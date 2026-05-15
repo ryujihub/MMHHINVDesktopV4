@@ -48,8 +48,6 @@ const menuItems = [
     title: 'Reports',
     items: [
       { text: 'Reports Overview', icon: <AssessmentIcon />, path: '/reports', tooltip: 'View all reports and analytics' },
-      { text: 'Full Business Report', icon: <AssessmentIcon />, path: '/reports/comprehensive', tooltip: 'Complete business analysis and insights' },
-      { text: 'Sales Report', icon: <ReceiptIcon />, path: '/reports/sales', tooltip: 'Sales performance and revenue trends' },
       { text: 'Inventory Report', icon: <InventoryReportIcon />, path: '/reports/inventory', tooltip: 'Stock levels and product performance' }
     ]
   },

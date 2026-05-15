@@ -33,7 +33,7 @@ import { collection, query, orderBy, limit as fbLimit, onSnapshot } from 'fireba
 import { db } from '../config/firebase.js';
 
 const Dashboard = () => {
-  const { products, categories, getLowStockProducts, totalLostAmount } = useInventory();
+  const { products, categories, getLowStockProducts, totalLostAmount, loading } = useInventory();
   const { user, isAdmin, getUserRole, hasPermission } = useAuth();
   const navigate = useNavigate();
   const [adminSetupMessage, setAdminSetupMessage] = useState('');
@@ -394,12 +394,12 @@ const Dashboard = () => {
                 </Typography>
               ) : (
                 <List dense>
-                  {recentActivity.map((item) => (
-                    <React.Fragment key={item.id}>
+                  {recentActivity.filter(a => !a.type?.startsWith('sale')).map((activity, index) => (
+                    <React.Fragment key={activity.id}>
                       <ListItem sx={{ px: 0 }}>
                         <ListItemIcon>
                           {(() => {
-                            const type = item.type || '';
+                            const type = activity.type || '';
                             if (type.startsWith('product')) return <InventoryIcon color="primary" />;
                             if (type.startsWith('category')) return <InventoryIcon color="info" />;
                             if (type.startsWith('sale')) return <TrendingUpIcon color="success" />;

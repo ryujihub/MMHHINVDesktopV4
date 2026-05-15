@@ -185,55 +185,5 @@ async add(productData) {
         return [];
       }
     }
-  },
-
-  // Sales (Completed Orders)
-  sales: { // Keeping the object name as 'sales' for consistency with useInventory context, but it will now interact with 'orders' collection
-    async getAll() {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'orders')); // Changed from 'sales' to 'orders'
-        return querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-      } catch (error) {
-        console.error('Error getting orders:', error); // Changed log message
-        throw error;
-      }
-    },
-
-    async add(saleData) {
-      try {
-        const docRef = await addDoc(collection(db, 'orders'), { // Changed from 'sales' to 'orders'
-          ...saleData,
-          createdAt: serverTimestamp()
-        });
-        return { id: docRef.id, ...saleData };
-      } catch (error) {
-        console.error('Error adding order:', error); // Changed log message
-        throw error;
-      }
-    },
-
-    async update(id, updates) {
-      try {
-        const docRef = doc(db, 'orders', id); // Changed from 'sales' to 'orders'
-        await updateDoc(docRef, updates);
-        return { success: true };
-      } catch (error) {
-        console.error('Error updating order:', error); // Changed log message
-        throw error;
-      }
-    },
-
-    async delete(id) {
-      try {
-        await deleteDoc(doc(db, 'orders', id)); // Changed from 'sales' to 'orders'
-        return { success: true };
-      } catch (error) {
-        console.error('Error deleting order:', error); // Changed log message
-        throw error;
-      }
-    }
   }
 };
